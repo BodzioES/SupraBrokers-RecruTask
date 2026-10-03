@@ -1,9 +1,18 @@
+import json
+
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ValidationError
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, DeleteView, FormView, ListView, UpdateView
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    FormView,
+    ListView,
+    TemplateView,
+    UpdateView,
+)
 
 from .forms import ContactForm, ContactImportForm
 from .models import Contact
@@ -91,3 +100,23 @@ class ContactImportView(FormView):
             self.request, f'Imported {added} contacts, skipped {skipped}.'
         )
         return super().form_valid(form)
+
+
+class DashboardView(TemplateView):
+    """Simple stats: contacts per city chart data."""
+
+    template_name = 'contacts/dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        stats = list(
+            Contact.objects.values('city')
+            .annotate(total=Count('id'))
+            .order_by('-total', 'city')
+        )
+        context['city_stats'] = stats
+        context['total_contacts'] = Contact.objects.count()
+        context['chart_data'] = json.dumps(
+            {'labels': [s['city'] for s in stats], 'data': [s['total'] for s in stats]}
+        )
+        return context
