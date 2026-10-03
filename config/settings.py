@@ -150,6 +150,11 @@ WEATHER_HTTP_TIMEOUT = int(os.getenv('WEATHER_HTTP_TIMEOUT', '8'))
 WEATHER_GEO_CACHE_TIMEOUT = 24 * 3600  # coordinates rarely change
 WEATHER_CACHE_TIMEOUT = 45 * 60  # current weather freshness
 
+# Auth isolation (#11). No registration: users are created via createsuperuser.
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'contacts:list'
+LOGOUT_REDIRECT_URL = 'login'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 

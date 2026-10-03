@@ -1,6 +1,7 @@
 import json
 
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ValidationError
 from django.db.models import Count, Q
@@ -24,9 +25,17 @@ from .weather import get_city_weather
 ALLOWED_SORTS = ('last_name', 'created_at')
 
 
-def filter_contacts(params) -> object:
-    """Apply the same search/sort as the list view. Shared with export."""
+def visible_contacts(user) -> object:
+    """Isolation: superusers see everything, others see own or shared."""
     qs = Contact.objects.select_related('status').all()
+    if user.is_superuser:
+        return qs
+    return qs.filter(Q(owner=user) | Q(is_shared=True))
+
+
+def filter_contacts(params, user) -> object:
+    """Apply visibility plus the same search/sort as the list view."""
+    qs = visible_contacts(user)
     query = params.get('q', '').strip()
     if query:
         qs = qs.filter(
@@ -46,7 +55,7 @@ def filter_contacts(params) -> object:
     return qs.order_by(f'{prefix}{sort}', 'id')
 
 
-class ContactListView(ListView):
+class ContactListView(LoginRequiredMixin, ListView):
     """Paginated, searchable and sortable contact list."""
 
     model = Contact
@@ -66,7 +75,7 @@ class ContactListView(ListView):
         return sort, order
 
     def get_queryset(self):
-        return filter_contacts(self.request.GET)
+        return filter_contacts(self.request.GET, self.request.user)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -78,15 +87,28 @@ class ContactListView(ListView):
         return context
 
 
-class ContactCreateView(SuccessMessageMixin, CreateView):
+class ContactCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Contact
     form_class = ContactForm
     template_name = 'contacts/contact_form.html'
     success_url = reverse_lazy('contacts:list')
     success_message = 'Contact %(first_name)s %(last_name)s was created.'
 
+    def form_valid(self, form):
+        form.instance.owner = self.request.user
+        return super().form_valid(form)
 
-class ContactUpdateView(SuccessMessageMixin, UpdateView):
+
+class OwnedContactMixin:
+    """Limit edit/delete to contacts the user may manage (own or shared)."""
+
+    def get_queryset(self):
+        return visible_contacts(self.request.user)
+
+
+class ContactUpdateView(
+    LoginRequiredMixin, OwnedContactMixin, SuccessMessageMixin, UpdateView
+):
     model = Contact
     form_class = ContactForm
     template_name = 'contacts/contact_form.html'
@@ -94,20 +116,22 @@ class ContactUpdateView(SuccessMessageMixin, UpdateView):
     success_message = 'Contact %(first_name)s %(last_name)s was updated.'
 
 
-class ContactDeleteView(DeleteView):
+class ContactDeleteView(LoginRequiredMixin, OwnedContactMixin, DeleteView):
     model = Contact
     template_name = 'contacts/contact_confirm_delete.html'
     success_url = reverse_lazy('contacts:list')
 
 
-class ContactImportView(FormView):
+class ContactImportView(LoginRequiredMixin, FormView):
     form_class = ContactImportForm
     template_name = 'contacts/contact_import.html'
     success_url = reverse_lazy('contacts:list')
 
     def form_valid(self, form):
         try:
-            added, skipped = import_contacts_from_csv(form.cleaned_data['file'])
+            added, skipped = import_contacts_from_csv(
+                form.cleaned_data['file'], owner=self.request.user
+            )
         except ValidationError as exc:
             form.add_error('file', exc)
             return self.form_invalid(form)
@@ -117,27 +141,29 @@ class ContactImportView(FormView):
         return super().form_valid(form)
 
 
-class DashboardView(TemplateView):
+class DashboardView(LoginRequiredMixin, TemplateView):
     """Simple stats: contacts per city chart data."""
 
     template_name = 'contacts/dashboard.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        visible_ids = visible_contacts(self.request.user).values('id')
         stats = list(
-            Contact.objects.values('city')
+            Contact.objects.filter(id__in=visible_ids)
+            .values('city')
             .annotate(total=Count('id'))
             .order_by('-total', 'city')
         )
         context['city_stats'] = stats
-        context['total_contacts'] = Contact.objects.count()
+        context['total_contacts'] = visible_ids.count()
         context['chart_data'] = json.dumps(
             {'labels': [s['city'] for s in stats], 'data': [s['total'] for s in stats]}
         )
         return context
 
 
-class WeatherView(View):
+class WeatherView(LoginRequiredMixin, View):
     """JSON endpoint for one city. Used by weather.js after page load."""
 
     def get(self, request):
@@ -155,7 +181,7 @@ class WeatherView(View):
         return JsonResponse({'city': city, **weather})
 
 
-class ContactExportView(View):
+class ContactExportView(LoginRequiredMixin, View):
     """Download the current (filtered) list as .CSV."""
 
     def get(self, request):
@@ -163,7 +189,7 @@ class ContactExportView(View):
 
         from django.http import HttpResponse
 
-        contacts = filter_contacts(request.GET)
+        contacts = filter_contacts(request.GET, request.user)
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="contacts.csv"'
         writer = csv.writer(response)
