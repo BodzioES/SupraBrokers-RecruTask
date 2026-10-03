@@ -134,6 +134,22 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20,
 }
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'suprabrokers-cache',
+        'TIMEOUT': 2700,  # 45 minutes for weather data
+    }
+}
+
+# Weather integration (#9). Nominatim requires a descriptive User-Agent.
+WEATHER_USER_AGENT = os.getenv(
+    'WEATHER_USER_AGENT', 'SupraBrokersRecruTask/1.0 (recruitment task)'
+)
+WEATHER_HTTP_TIMEOUT = int(os.getenv('WEATHER_HTTP_TIMEOUT', '8'))
+WEATHER_GEO_CACHE_TIMEOUT = 24 * 3600  # coordinates rarely change
+WEATHER_CACHE_TIMEOUT = 45 * 60  # current weather freshness
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 

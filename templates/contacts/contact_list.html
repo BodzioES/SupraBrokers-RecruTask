@@ -113,3 +113,8 @@
 </nav>
 {% endif %}
 {% endblock %}
+
+{% block extra_js %}
+{% load static %}
+<script src="{% static 'contacts/js/weather.js' %}"></script>
+{% endblock %}

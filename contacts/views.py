@@ -4,7 +4,9 @@ from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ValidationError
 from django.db.models import Count, Q
+from django.http import JsonResponse
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -17,6 +19,7 @@ from django.views.generic import (
 from .forms import ContactForm, ContactImportForm
 from .models import Contact
 from .services import import_contacts_from_csv
+from .weather import get_city_weather
 
 
 class ContactListView(ListView):
@@ -120,3 +123,21 @@ class DashboardView(TemplateView):
             {'labels': [s['city'] for s in stats], 'data': [s['total'] for s in stats]}
         )
         return context
+
+
+class WeatherView(View):
+    """JSON endpoint for one city. Used by weather.js after page load."""
+
+    def get(self, request):
+        city = request.GET.get('city', '').strip()
+        if not city:
+            return JsonResponse({'error': 'Missing city.'}, status=400)
+        try:
+            weather = get_city_weather(city)
+        except Exception:
+            return JsonResponse(
+                {'error': 'Weather provider is unavailable.'}, status=502
+            )
+        if weather is None:
+            return JsonResponse({'error': 'City not found.'}, status=404)
+        return JsonResponse({'city': city, **weather})
