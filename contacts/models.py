@@ -72,3 +72,8 @@ class Contact(models.Model):
             self.last_name = self.last_name.strip()
         if self.city:
             self.city = self.city.strip()
+
+    def save(self, *args, **kwargs):
+        # Enforce normalization + uniqueness also for direct .create() calls.
+        self.full_clean()
+        return super().save(*args, **kwargs)
