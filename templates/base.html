@@ -18,10 +18,21 @@
     </button>
     <div class="collapse navbar-collapse" id="mainNav">
       <ul class="navbar-nav ms-auto">
+        {% if user.is_authenticated %}
         <li class="nav-item"><a class="nav-link active" href="{% url 'contacts:list' %}">Contacts</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'contacts:dashboard' %}">Dashboard</a></li>
         <li class="nav-item"><a class="nav-link" href="{% url 'contacts:import' %}">Import</a></li>
         <li class="nav-item"><a class="nav-link" href="/api/contacts/">API</a></li>
+        <li class="nav-item"><span class="nav-link disabled">{{ user.username }}</span></li>
+        <li class="nav-item">
+          <form method="post" action="{% url 'logout' %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-link nav-link">Log out</button>
+          </form>
+        </li>
+        {% else %}
+        <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Log in</a></li>
+        {% endif %}
       </ul>
     </div>
   </div>

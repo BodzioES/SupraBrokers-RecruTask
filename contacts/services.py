@@ -9,7 +9,7 @@ from .models import Contact, ContactStatus, normalize_phone
 REQUIRED_COLUMNS = {'first_name', 'last_name', 'phone', 'email', 'city', 'status'}
 
 
-def import_contacts_from_csv(uploaded_file) -> tuple[int, int]:
+def import_contacts_from_csv(uploaded_file, owner=None) -> tuple[int, int]:
     """Parse CSV and create contacts. Returns (added, skipped).
 
     - Encoding utf-8-sig (handles BOM from Excel).
@@ -51,6 +51,7 @@ def import_contacts_from_csv(uploaded_file) -> tuple[int, int]:
                 email=email,
                 city=city,
                 status=status,
+                owner=owner,
             )
             contact.full_clean()
             contact.save()

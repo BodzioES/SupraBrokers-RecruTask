@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
@@ -113,3 +114,35 @@ class CsvImportTest(TestCase):
         self.assertEqual(added, 1)
         self.assertEqual(skipped, 1)
         self.assertTrue(Contact.objects.filter(email='ewa@example.com').exists())
+
+
+class ContactIsolationTest(TestCase):
+    """Users see own or shared contacts; others' private ones stay hidden."""
+
+    def setUp(self):
+        self.user_a = User.objects.create_user('alice', password='pass')
+        self.user_b = User.objects.create_user('bob', password='pass')
+        status = make_status()
+        self.private_b = make_contact(
+            phone='111111111', email='b@example.com', status=status,
+            owner=self.user_b, is_shared=False,
+        )
+        self.shared_a = make_contact(
+            phone='222222222', email='shared@example.com', status=status,
+            owner=self.user_a, is_shared=True,
+        )
+
+    def test_user_does_not_see_others_private_contacts(self):
+        self.client.force_login(self.user_a)
+        response = self.client.get(reverse('contacts:list'))
+        contacts = list(response.context['contacts'])
+        self.assertIn(self.shared_a, contacts)
+        self.assertNotIn(self.private_b, contacts)
+
+    def test_user_cannot_edit_others_private_contact(self):
+        self.client.force_login(self.user_a)
+        url = reverse('contacts:edit', args=[self.private_b.pk])
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+    def test_login_is_required(self):
+        self.assertEqual(self.client.get(reverse('contacts:list')).status_code, 302)
