@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Contacts — SupraBrokers{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h1 class="h3 mb-0"><i class="bi bi-person-lines-fill"></i> Contacts</h1>
+  <span class="text-muted small">
+    {% if page_obj %}{{ page_obj.paginator.count }} total{% endif %}
+  </span>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-12 col-md-6">
+    <input type="text" name="q" value="{{ q }}" class="form-control"
+           placeholder="Search name, city, email or phone...">
+  </div>
+  <input type="hidden" name="sort" value="{{ sort }}">
+  <input type="hidden" name="order" value="{{ order }}">
+  <div class="col-6 col-md-auto">
+    <button type="submit" class="btn btn-primary w-100">
+      <i class="bi bi-search"></i> Search
+    </button>
+  </div>
+  <div class="col-6 col-md-auto">
+    <a href="{% url 'contacts:list' %}" class="btn btn-outline-secondary w-100">Clear</a>
+  </div>
+</form>
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>
+            <a href="?q={{ q|urlencode }}&sort=last_name&order={% if sort == 'last_name' %}{{ next_order }}{% else %}asc{% endif %}">
+              Last name
+              {% if sort == 'last_name' %}{% if order == 'asc' %}▲{% else %}▼{% endif %}{% endif %}
+            </a>
+          </th>
+          <th>First name</th>
+          <th>City</th>
+          <th>Status</th>
+          <th>Weather</th>
+          <th>
+            <a href="?q={{ q|urlencode }}&sort=created_at&order={% if sort == 'created_at' %}{{ next_order }}{% else %}desc{% endif %}">
+              Added
+              {% if sort == 'created_at' %}{% if order == 'asc' %}▲{% else %}▼{% endif %}{% endif %}
+            </a>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for contact in contacts %}
+        <tr>
+          <td class="fw-semibold">{{ contact.last_name }}</td>
+          <td>{{ contact.first_name }}</td>
+          <td><i class="bi bi-geo-alt text-muted"></i> {{ contact.city }}</td>
+          <td>
+            <span class="badge text-bg-secondary">{{ contact.status.name }}</span>
+          </td>
+          <td>
+            <span class="weather-slot text-muted small" data-city="{{ contact.city }}">—</span>
+          </td>
+          <td class="text-muted small">{{ contact.created_at|date:"Y-m-d H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center text-muted py-4">
+            No contacts found. Adjust search or add a new contact.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if page_obj.has_other_pages %}
+<nav class="mt-3">
+  <ul class="pagination justify-content-center">
+    {% if page_obj.has_previous %}
+    <li class="page-item">
+      <a class="page-link" href="?q={{ q|urlencode }}&sort={{ sort }}&order={{ order }}&page={{ page_obj.previous_page_number }}">Previous</a>
+    </li>
+    {% endif %}
+    <li class="page-item disabled">
+      <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    </li>
+    {% if page_obj.has_next %}
+    <li class="page-item">
+      <a class="page-link" href="?q={{ q|urlencode }}&sort={{ sort }}&order={{ order }}&page={{ page_obj.next_page_number }}">Next</a>
+    </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}
