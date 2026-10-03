@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if object %}Edit{% else %}Add{% endif %} contact — SupraBrokers{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h1 class="h4 mb-3">
+          {% if object %}<i class="bi bi-pencil"></i> Edit contact{% else %}<i class="bi bi-plus-circle"></i> Add contact{% endif %}
+        </h1>
+        <form method="post" id="contact-form" novalidate>
+          {% csrf_token %}
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+          {% endif %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.first_name.id_for_label }}">First name</label>
+              {{ form.first_name }}
+              <div class="invalid-feedback" data-error-for="{{ form.first_name.id_for_label }}"></div>
+              {% if form.first_name.errors %}<div class="text-danger small">{{ form.first_name.errors }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.last_name.id_for_label }}">Last name</label>
+              {{ form.last_name }}
+              <div class="invalid-feedback" data-error-for="{{ form.last_name.id_for_label }}"></div>
+              {% if form.last_name.errors %}<div class="text-danger small">{{ form.last_name.errors }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.phone.id_for_label }}">Phone</label>
+              {{ form.phone }}
+              <div class="invalid-feedback" data-error-for="{{ form.phone.id_for_label }}"></div>
+              <div class="form-text">Polish number: 9 digits, optional +48.</div>
+              {% if form.phone.errors %}<div class="text-danger small">{{ form.phone.errors }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.email.id_for_label }}">Email</label>
+              {{ form.email }}
+              <div class="invalid-feedback" data-error-for="{{ form.email.id_for_label }}"></div>
+              {% if form.email.errors %}<div class="text-danger small">{{ form.email.errors }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.city.id_for_label }}">City</label>
+              {{ form.city }}
+              <div class="invalid-feedback" data-error-for="{{ form.city.id_for_label }}"></div>
+              {% if form.city.errors %}<div class="text-danger small">{{ form.city.errors }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="{{ form.status.id_for_label }}">Status</label>
+              {{ form.status }}
+              {% if form.status.errors %}<div class="text-danger small">{{ form.status.errors }}</div>{% endif %}
+            </div>
+            <div class="col-12">
+              <div class="form-check">
+                {{ form.is_shared }}
+                <label class="form-check-label" for="{{ form.is_shared.id_for_label }}">Shared contact</label>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-lg"></i> Save
+            </button>
+            <a href="{% url 'contacts:list' %}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'contacts/js/validation.js' %}"></script>
+{% endblock %}

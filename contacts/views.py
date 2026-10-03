@@ -1,6 +1,9 @@
+from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
-from django.views.generic import ListView
+from django.urls import reverse_lazy
+from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
+from .forms import ContactForm
 from .models import Contact
 
 
@@ -46,3 +49,25 @@ class ContactListView(ListView):
         context['order'] = order
         context['next_order'] = 'desc' if order == 'asc' else 'asc'
         return context
+
+
+class ContactCreateView(SuccessMessageMixin, CreateView):
+    model = Contact
+    form_class = ContactForm
+    template_name = 'contacts/contact_form.html'
+    success_url = reverse_lazy('contacts:list')
+    success_message = 'Contact %(first_name)s %(last_name)s was created.'
+
+
+class ContactUpdateView(SuccessMessageMixin, UpdateView):
+    model = Contact
+    form_class = ContactForm
+    template_name = 'contacts/contact_form.html'
+    success_url = reverse_lazy('contacts:list')
+    success_message = 'Contact %(first_name)s %(last_name)s was updated.'
+
+
+class ContactDeleteView(DeleteView):
+    model = Contact
+    template_name = 'contacts/contact_confirm_delete.html'
+    success_url = reverse_lazy('contacts:list')
