@@ -1,10 +1,13 @@
+from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+from django.views.generic import CreateView, DeleteView, FormView, ListView, UpdateView
 
-from .forms import ContactForm
+from .forms import ContactForm, ContactImportForm
 from .models import Contact
+from .services import import_contacts_from_csv
 
 
 class ContactListView(ListView):
@@ -71,3 +74,20 @@ class ContactDeleteView(DeleteView):
     model = Contact
     template_name = 'contacts/contact_confirm_delete.html'
     success_url = reverse_lazy('contacts:list')
+
+
+class ContactImportView(FormView):
+    form_class = ContactImportForm
+    template_name = 'contacts/contact_import.html'
+    success_url = reverse_lazy('contacts:list')
+
+    def form_valid(self, form):
+        try:
+            added, skipped = import_contacts_from_csv(form.cleaned_data['file'])
+        except ValidationError as exc:
+            form.add_error('file', exc)
+            return self.form_invalid(form)
+        messages.success(
+            self.request, f'Imported {added} contacts, skipped {skipped}.'
+        )
+        return super().form_valid(form)
