@@ -15,6 +15,9 @@
     <a href="{% url 'contacts:import' %}" class="btn btn-outline-secondary btn-sm">
       <i class="bi bi-upload"></i> Import
     </a>
+    <a href="{% url 'contacts:export' %}?q={{ q|urlencode }}&sort={{ sort }}&order={{ order }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-download"></i> Export
+    </a>
   </div>
 </div>
 

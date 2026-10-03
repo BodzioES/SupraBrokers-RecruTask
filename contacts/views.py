@@ -21,6 +21,30 @@ from .models import Contact
 from .services import import_contacts_from_csv
 from .weather import get_city_weather
 
+ALLOWED_SORTS = ('last_name', 'created_at')
+
+
+def filter_contacts(params) -> object:
+    """Apply the same search/sort as the list view. Shared with export."""
+    qs = Contact.objects.select_related('status').all()
+    query = params.get('q', '').strip()
+    if query:
+        qs = qs.filter(
+            Q(first_name__icontains=query)
+            | Q(last_name__icontains=query)
+            | Q(email__icontains=query)
+            | Q(city__icontains=query)
+            | Q(phone__icontains=query)
+        )
+    sort = params.get('sort', 'last_name')
+    if sort not in ALLOWED_SORTS:
+        sort = 'last_name'
+    order = params.get('order', 'asc')
+    if order not in ('asc', 'desc'):
+        order = 'asc'
+    prefix = '' if order == 'asc' else '-'
+    return qs.order_by(f'{prefix}{sort}', 'id')
+
 
 class ContactListView(ListView):
     """Paginated, searchable and sortable contact list."""
@@ -30,7 +54,7 @@ class ContactListView(ListView):
     context_object_name = 'contacts'
     paginate_by = 10
 
-    allowed_sorts = ('last_name', 'created_at')
+    allowed_sorts = ALLOWED_SORTS
 
     def get_sort(self) -> tuple[str, str]:
         sort = self.request.GET.get('sort', 'last_name')
@@ -42,19 +66,7 @@ class ContactListView(ListView):
         return sort, order
 
     def get_queryset(self):
-        qs = Contact.objects.select_related('status').all()
-        query = self.request.GET.get('q', '').strip()
-        if query:
-            qs = qs.filter(
-                Q(first_name__icontains=query)
-                | Q(last_name__icontains=query)
-                | Q(email__icontains=query)
-                | Q(city__icontains=query)
-                | Q(phone__icontains=query)
-            )
-        sort, order = self.get_sort()
-        prefix = '' if order == 'asc' else '-'
-        return qs.order_by(f'{prefix}{sort}', 'id')
+        return filter_contacts(self.request.GET)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -141,3 +153,33 @@ class WeatherView(View):
         if weather is None:
             return JsonResponse({'error': 'City not found.'}, status=404)
         return JsonResponse({'city': city, **weather})
+
+
+class ContactExportView(View):
+    """Download the current (filtered) list as .CSV."""
+
+    def get(self, request):
+        import csv
+
+        from django.http import HttpResponse
+
+        contacts = filter_contacts(request.GET)
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="contacts.csv"'
+        writer = csv.writer(response)
+        writer.writerow(
+            ['first_name', 'last_name', 'phone', 'email', 'city', 'status', 'created_at']
+        )
+        for contact in contacts:
+            writer.writerow(
+                [
+                    contact.first_name,
+                    contact.last_name,
+                    contact.phone,
+                    contact.email,
+                    contact.city,
+                    contact.status.name,
+                    contact.created_at.isoformat(),
+                ]
+            )
+        return response
