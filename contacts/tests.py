@@ -58,8 +58,30 @@ class ContactApiTest(APITestCase):
     """CRUD through /api/contacts/."""
 
     def setUp(self):
+        self.user = User.objects.create_user('apiuser', password='pass')
+        self.client.force_authenticate(user=self.user)
         self.status = make_status()
-        self.contact = make_contact(status=self.status)
+        self.contact = make_contact(status=self.status, owner=self.user)
+
+    def test_anonymous_is_rejected(self):
+        self.client.force_authenticate(user=None)
+        response = self.client.get('/api/contacts/')
+        self.assertIn(
+            response.status_code,
+            (http_status.HTTP_401_UNAUTHORIZED, http_status.HTTP_403_FORBIDDEN),
+        )
+
+    def test_private_contact_of_other_user_is_hidden(self):
+        other = User.objects.create_user('other', password='pass')
+        hidden = make_contact(
+            phone='333333333', email='other@example.com',
+            status=self.status, owner=other,
+        )
+        response = self.client.get('/api/contacts/')
+        ids = [item['id'] for item in response.data['results']]
+        self.assertNotIn(hidden.id, ids)
+        detail = self.client.get(f'/api/contacts/{hidden.id}/')
+        self.assertEqual(detail.status_code, http_status.HTTP_404_NOT_FOUND)
 
     def test_list_returns_required_fields(self):
         response = self.client.get('/api/contacts/')

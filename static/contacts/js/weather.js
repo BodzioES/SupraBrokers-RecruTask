@@ -1,17 +1,7 @@
-// Lazy weather loading: one request per distinct city per page load.
+// Lazy weather loading: one request per distinct city.
 // Backend caches coordinates (24h) and weather (45 min).
 (function () {
-  const slots = document.querySelectorAll('.weather-slot[data-city]');
-  if (!slots.length) return;
-
-  const byCity = new Map();
-  slots.forEach((slot) => {
-    const city = (slot.dataset.city || '').trim();
-    if (!city) return;
-    slot.textContent = '…';
-    if (!byCity.has(city)) byCity.set(city, []);
-    byCity.get(city).push(slot);
-  });
+  const loadedCities = new Set();
 
   function format(data) {
     const parts = [];
@@ -21,20 +11,44 @@
     return parts.join(' · ') || 'n/a';
   }
 
-  byCity.forEach((citySlots, city) => {
-    fetch(`/weather/?city=${encodeURIComponent(city)}`)
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data) => {
-        const text = data ? format(data) : 'n/a';
-        citySlots.forEach((slot) => {
-          slot.textContent = text;
-          slot.classList.remove('text-muted');
+  // Scan root for new weather slots. Already-loaded cities fill instantly.
+  function refreshWeather(root) {
+    const slots = (root || document).querySelectorAll('.weather-slot[data-city]');
+    if (!slots.length) return;
+    const fresh = new Map();
+    slots.forEach((slot) => {
+      if (slot.dataset.loaded) return;
+      const city = (slot.dataset.city || '').trim();
+      if (!city) return;
+      slot.dataset.loaded = '1';
+      if (loadedCities.has(city)) {
+        slot.textContent = loadedCities.get(city);
+        slot.classList.remove('text-muted');
+        return;
+      }
+      slot.textContent = '…';
+      if (!fresh.has(city)) fresh.set(city, []);
+      fresh.get(city).push(slot);
+    });
+    fresh.forEach((citySlots, city) => {
+      fetch(`/weather/?city=${encodeURIComponent(city)}`)
+        .then((response) => (response.ok ? response.json() : null))
+        .then((data) => {
+          const text = data ? format(data) : 'n/a';
+          loadedCities.set(city, text);
+          citySlots.forEach((slot) => {
+            slot.textContent = text;
+            slot.classList.remove('text-muted');
+          });
+        })
+        .catch(() => {
+          citySlots.forEach((slot) => {
+            slot.textContent = 'n/a';
+          });
         });
-      })
-      .catch(() => {
-        citySlots.forEach((slot) => {
-          slot.textContent = 'n/a';
-        });
-      });
-  });
+    });
+  }
+
+  window.refreshWeather = refreshWeather;
+  document.addEventListener('DOMContentLoaded', () => refreshWeather(document));
 })();
