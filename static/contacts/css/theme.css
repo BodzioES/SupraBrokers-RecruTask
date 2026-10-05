@@ -258,11 +258,11 @@ body {
 
 /* ---------- Modals ---------- */
 
-.modal-scale .modal-dialog {
-  transform: scale(0.9);
+.modal.modal-scale.fade .modal-dialog {
+  transform: scale(0.92);
   transition: transform 0.18s ease-out;
 }
 
-.modal-scale.show .modal-dialog {
+.modal.modal-scale.fade.show .modal-dialog {
   transform: scale(1);
 }
