@@ -5,9 +5,13 @@
   const modalEl = document.getElementById('contact-modal');
   const form = document.getElementById('contact-form');
   const modalTitle = document.getElementById('contact-modal-title');
+  const deleteModalEl = document.getElementById('delete-modal');
+  const deleteForm = document.getElementById('delete-form');
+  const deleteName = document.getElementById('delete-name');
   if (!detail || !modalEl || !form) return;
 
   let modalInstance = null;
+  let deleteModalInstance = null;
   let activeRow = null;
   const cache = new Map();
 
@@ -55,9 +59,9 @@
         <button class="btn btn-primary btn-sm" data-action="edit" data-id="${data.id}">
           <i class="bi bi-pencil"></i> Edit
         </button>
-        <a class="btn btn-outline-danger btn-sm" href="/${data.id}/delete/">
+        <button class="btn btn-outline-danger btn-sm" data-action="delete" data-id="${data.id}">
           <i class="bi bi-trash"></i> Delete
-        </a>
+        </button>
       </div>`;
     if (window.refreshWeather) window.refreshWeather(detail);
   }
@@ -124,10 +128,20 @@
     addButton.addEventListener('click', () => openModal('add'));
   }
 
+  function openDeleteModal(data) {
+    if (!deleteModalEl || !deleteForm || !deleteName) return;
+    if (!deleteModalInstance) deleteModalInstance = new bootstrap.Modal(deleteModalEl);
+    deleteForm.action = `/${data.id}/delete/`;
+    deleteName.textContent = `${data.first_name} ${data.last_name} (${data.city})`;
+    deleteModalInstance.show();
+  }
+
   detail.addEventListener('click', (event) => {
-    const editButton = event.target.closest('[data-action="edit"]');
-    if (!editButton) return;
-    const data = cache.get(editButton.dataset.id);
-    if (data) openModal('edit', data);
+    const button = event.target.closest('[data-action]');
+    if (!button) return;
+    const data = cache.get(button.dataset.id);
+    if (!data) return;
+    if (button.dataset.action === 'edit') openModal('edit', data);
+    if (button.dataset.action === 'delete') openDeleteModal(data);
   });
 })();

@@ -1,7 +1,7 @@
 // Lazy weather loading: one request per distinct city.
 // Backend caches coordinates (24h) and weather (45 min).
 (function () {
-  const loadedCities = new Set();
+  const loadedCities = new Map();
 
   function format(data) {
     const parts = [];
