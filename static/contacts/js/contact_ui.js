@@ -35,34 +35,51 @@
       </svg></span>`;
   }
 
+  function statusClass(name) {
+    const slug = String(name || '')
+      .toLowerCase()
+      .replace(/[\s_]+/g, '_')
+      .replace(/[^a-z0-9_-]/g, '');
+    return ['new', 'in_progress', 'lost', 'outdated'].includes(slug)
+      ? `status-${slug}`
+      : 'status-unknown';
+  }
+
   function renderDetail(data) {
     const added = (data.created_at || '').slice(0, 16).replace('T', ' ');
     detail.innerHTML = `
-      <div class="d-flex align-items-center gap-3 mb-3">
+      <div class="d-flex align-items-center gap-3 mb-2">
         ${avatarLg()}
         <div>
-          <h2 class="h5 mb-0">${esc(data.first_name)} ${esc(data.last_name)}</h2>
-          <span class="badge text-bg-secondary">${esc(data.status_name || '')}</span>
+          <h2 class="h5 mb-1 fw-semibold">${esc(data.first_name)} ${esc(data.last_name)}</h2>
+          <span class="status-badge ${statusClass(data.status_name)}">${esc(data.status_name || '')}</span>
         </div>
       </div>
-      <ul class="list-group list-group-flush mb-3">
-        <li class="list-group-item"><i class="bi bi-telephone"></i>
-          <a href="tel:${esc(data.phone)}">${esc(data.phone)}</a></li>
-        <li class="list-group-item"><i class="bi bi-envelope"></i>
-          <a href="mailto:${esc(data.email)}">${esc(data.email)}</a></li>
-        <li class="list-group-item"><i class="bi bi-geo-alt"></i> ${esc(data.city)}</li>
-        <li class="list-group-item"><i class="bi bi-cloud-sun"></i>
-          <span class="weather-slot text-muted small" data-city="${esc(data.city)}">…</span></li>
-        <li class="list-group-item text-muted small">Added: ${esc(added)}</li>
-      </ul>
-      <div class="d-flex gap-2">
-        <button class="btn btn-primary btn-sm" data-action="edit" data-id="${data.id}">
-          <i class="bi bi-pencil"></i> Edit
+      <div class="mb-3">
+        <div class="detail-row"><i data-lucide="phone"></i>
+          <a href="tel:${esc(data.phone)}">${esc(data.phone)}</a></div>
+        <div class="detail-row"><i data-lucide="mail"></i>
+          <a href="mailto:${esc(data.email)}">${esc(data.email)}</a></div>
+        <div class="detail-row"><i data-lucide="map-pin"></i> ${esc(data.city)}</div>
+        <div class="detail-row"><i data-lucide="cloud-sun"></i>
+          <span class="weather-slot text-muted small" data-city="${esc(data.city)}">…</span></div>
+        <div class="detail-row text-muted small"><i data-lucide="calendar"></i> Added: ${esc(added)}</div>
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-primary btn-sm" href="tel:${esc(data.phone)}">
+          <i data-lucide="phone"></i>Call
+        </a>
+        <a class="btn btn-outline-secondary btn-sm" href="mailto:${esc(data.email)}">
+          <i data-lucide="mail"></i>Email
+        </a>
+        <button class="btn btn-outline-secondary btn-sm" data-action="edit" data-id="${data.id}">
+          <i data-lucide="pencil"></i>Edit
         </button>
-        <button class="btn btn-outline-danger btn-sm" data-action="delete" data-id="${data.id}">
-          <i class="bi bi-trash"></i> Delete
+        <button class="btn btn-outline-danger btn-sm btn-icon" data-action="delete" data-id="${data.id}" title="Delete">
+          <i data-lucide="trash-2"></i>
         </button>
       </div>`;
+    if (window.lucide) window.lucide.createIcons();
     if (window.refreshWeather) window.refreshWeather(detail);
   }
 
