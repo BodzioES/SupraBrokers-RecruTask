@@ -18,7 +18,7 @@ from django.views.generic import (
 )
 
 from .forms import ContactForm, ContactImportForm
-from .models import Contact
+from .models import Contact, ContactStatus
 from .services import import_contacts_from_csv
 from .weather import get_city_weather
 
@@ -84,6 +84,7 @@ class ContactListView(LoginRequiredMixin, ListView):
         context['sort'] = sort
         context['order'] = order
         context['next_order'] = 'desc' if order == 'asc' else 'asc'
+        context['statuses'] = ContactStatus.objects.all()
         return context
 
 
