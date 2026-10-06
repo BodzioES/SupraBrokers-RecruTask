@@ -117,6 +117,50 @@ body {
   box-shadow: inset 3px 0 0 var(--bs-primary);
 }
 
+.contact-row:focus-visible {
+  outline: 2px solid var(--bs-primary);
+  outline-offset: 2px;
+}
+
+.copy-btn {
+  color: var(--bs-secondary-color);
+  text-decoration: none;
+  opacity: 0.7;
+}
+
+.copy-btn:hover {
+  opacity: 1;
+  color: var(--bs-primary);
+}
+
+.copy-btn.copied {
+  color: var(--bs-success);
+  opacity: 1;
+}
+
+@media (max-width: 575px) {
+  .contact-row .flex-grow-1 {
+    min-width: 0;
+  }
+
+  .avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .status-col {
+    width: 92px;
+  }
+
+  .status-col .status-badge {
+    min-width: 70px;
+  }
+
+  .contact-meta {
+    overflow-wrap: anywhere;
+  }
+}
+
 .detail-card {
   box-shadow: none;
   border: 1px solid var(--bs-border-color);
