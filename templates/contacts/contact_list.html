@@ -8,7 +8,7 @@
   <div>
     <h1 class="h4 mb-0 fw-semibold">Contacts</h1>
     <p class="text-muted small mb-0">
-      {% if page_obj %}{{ page_obj.paginator.count }} total{% endif %}
+      {% if page_obj %}{% if is_filtered %}{{ page_obj.paginator.count }} of {{ total_count }}{% else %}{{ total_count }} total{% endif %}{% endif %}
     </p>
   </div>
   <div class="d-flex align-items-center gap-2">
@@ -18,7 +18,7 @@
     <a href="{% url 'contacts:import' %}" class="btn btn-outline-secondary btn-sm">
       <i data-lucide="upload"></i>Import
     </a>
-    <a href="{% url 'contacts:export' %}?q={{ q|urlencode }}&sort={{ sort }}&order={{ order }}" class="btn btn-outline-secondary btn-sm">
+    <a href="{% url 'contacts:export' %}?q={{ q|urlencode }}&sort={{ sort }}&order={{ order }}&status={{ selected_status }}&city={{ selected_city|urlencode }}" class="btn btn-outline-secondary btn-sm">
       <i data-lucide="download"></i>Export
     </a>
   </div>
@@ -34,6 +34,22 @@
   </div>
   <input type="hidden" name="sort" value="{{ sort }}">
   <input type="hidden" name="order" value="{{ order }}">
+  <div class="col-6 col-md-3">
+    <select name="status" class="form-select" aria-label="Filter by status">
+      <option value="">All statuses</option>
+      {% for s in statuses %}
+      <option value="{{ s.id }}" {% if selected_status == s.id|stringformat:"s" %}selected{% endif %}>{{ s.display_name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-6 col-md-3">
+    <select name="city" class="form-select" aria-label="Filter by city">
+      <option value="">All cities</option>
+      {% for city in cities %}
+      <option value="{{ city }}" {% if selected_city == city %}selected{% endif %}>{{ city }}</option>
+      {% endfor %}
+    </select>
+  </div>
   <div class="col-6 col-md-auto">
     <button type="submit" class="btn btn-primary w-100">Search</button>
   </div>
@@ -43,11 +59,11 @@
   <div class="col-12 col-md-auto ms-md-auto">
     <div class="btn-group w-100" role="group" aria-label="Sort">
       <a class="btn btn-outline-secondary btn-sm {% if sort == 'last_name' %}active{% endif %}"
-         href="?q={{ q|urlencode }}&sort=last_name&order={% if sort == 'last_name' %}{{ next_order }}{% else %}asc{% endif %}">
+         href="?q={{ q|urlencode }}&status={{ selected_status }}&city={{ selected_city|urlencode }}&sort=last_name&order={% if sort == 'last_name' %}{{ next_order }}{% else %}asc{% endif %}">
         Surname {% if sort == 'last_name' %}<i data-lucide="{% if order == 'asc' %}arrow-up{% else %}arrow-down{% endif %}"></i>{% endif %}
       </a>
       <a class="btn btn-outline-secondary btn-sm {% if sort == 'created_at' %}active{% endif %}"
-         href="?q={{ q|urlencode }}&sort=created_at&order={% if sort == 'created_at' %}{{ next_order }}{% else %}desc{% endif %}">
+         href="?q={{ q|urlencode }}&status={{ selected_status }}&city={{ selected_city|urlencode }}&sort=created_at&order={% if sort == 'created_at' %}{{ next_order }}{% else %}desc{% endif %}">
         Added {% if sort == 'created_at' %}<i data-lucide="{% if order == 'asc' %}arrow-up{% else %}arrow-down{% endif %}"></i>{% endif %}
       </a>
     </div>
@@ -76,7 +92,10 @@
       {% empty %}
       <div class="card">
         <div class="card-body text-center text-muted py-4">
-          No contacts found. Adjust search or add a new contact.
+          <p class="mb-2">No contacts found. Adjust search or add a new contact.</p>
+          {% if is_filtered %}
+          <a href="{% url 'contacts:list' %}" class="btn btn-outline-secondary btn-sm">Clear filters</a>
+          {% endif %}
         </div>
       </div>
       {% endfor %}
@@ -87,7 +106,7 @@
       <ul class="pagination justify-content-center">
         {% if page_obj.has_previous %}
         <li class="page-item">
-          <a class="page-link" href="?q={{ q|urlencode }}&sort={{ sort }}&order={{ order }}&page={{ page_obj.previous_page_number }}"><i data-lucide="chevron-left"></i>Previous</a>
+          <a class="page-link" href="?q={{ q|urlencode }}&sort={{ sort }}&order={{ order }}&status={{ selected_status }}&city={{ selected_city|urlencode }}&page={{ page_obj.previous_page_number }}"><i data-lucide="chevron-left"></i>Previous</a>
         </li>
         {% endif %}
         <li class="page-item disabled">
@@ -95,7 +114,7 @@
         </li>
         {% if page_obj.has_next %}
         <li class="page-item">
-          <a class="page-link" href="?q={{ q|urlencode }}&sort={{ sort }}&order={{ order }}&page={{ page_obj.next_page_number }}">Next<i data-lucide="chevron-right"></i></a>
+          <a class="page-link" href="?q={{ q|urlencode }}&sort={{ sort }}&order={{ order }}&status={{ selected_status }}&city={{ selected_city|urlencode }}&page={{ page_obj.next_page_number }}">Next<i data-lucide="chevron-right"></i></a>
         </li>
         {% endif %}
       </ul>

@@ -282,3 +282,34 @@ class UnaccentSearchTest(TestCase):
         self.assertIn(self.contact, list(results))
         results = filter_contacts({'q': 'Żuk'}, self.user)
         self.assertIn(self.contact, list(results))
+
+
+class FilterTest(TestCase):
+    """Status/city filters narrow results; invalid values are ignored."""
+
+    def setUp(self):
+        self.user = User.objects.create_user('filterer', password='pass')
+        self.status = make_status()
+        other_status = make_status('lost')
+        self.warsaw = make_contact(
+            phone='777111222', email='w@example.com', city='Warszawa',
+            status=self.status, owner=self.user,
+        )
+        make_contact(
+            phone='777111333', email='g@example.com', city='Gdansk',
+            status=other_status, owner=self.user,
+        )
+
+    def test_filter_by_status(self):
+        results = filter_contacts({'status': str(self.status.id)}, self.user)
+        self.assertIn(self.warsaw, list(results))
+        self.assertEqual(len(list(results)), 1)
+
+    def test_filter_by_city_case_insensitive(self):
+        results = filter_contacts({'city': 'warszawa'}, self.user)
+        self.assertIn(self.warsaw, list(results))
+        self.assertEqual(len(list(results)), 1)
+
+    def test_invalid_filter_values_are_ignored(self):
+        results = filter_contacts({'status': 'nope', 'city': ''}, self.user)
+        self.assertEqual(len(list(results)), 2)

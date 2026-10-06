@@ -57,8 +57,50 @@
     return text.charAt(0).toUpperCase() + text.slice(1);
   }
 
+  function relativeTime(isoString) {
+    const date = new Date(isoString);
+    if (Number.isNaN(date.getTime())) return '';
+    const seconds = Math.round((Date.now() - date.getTime()) / 1000);
+    const locale = document.documentElement.lang || 'en';
+    const formatter = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+    const ranges = [
+      [60, 'second', 1],
+      [3600, 'minute', 60],
+      [86400, 'hour', 3600],
+      [2592000, 'day', 86400],
+      [31536000, 'month', 2592000],
+    ];
+    for (const [limit, unit, divisor] of ranges) {
+      if (Math.abs(seconds) < limit) {
+        return formatter.format(-Math.round(seconds / divisor), unit);
+      }
+    }
+    return formatter.format(-Math.round(seconds / 31536000), 'year');
+  }
+
+  function copyText(text, button) {
+    const done = () => {
+      button.classList.add('copied');
+      setTimeout(() => button.classList.remove('copied'), 1200);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => {});
+    } else {
+      const area = document.createElement('textarea');
+      area.value = text;
+      document.body.appendChild(area);
+      area.select();
+      try {
+        document.execCommand('copy');
+        done();
+      } catch (e) {}
+      document.body.removeChild(area);
+    }
+  }
+
   function renderDetail(data) {
-    const added = (data.created_at || '').slice(0, 16).replace('T', ' ');
+    const addedFull = (data.created_at || '').slice(0, 16).replace('T', ' ');
+    const addedRelative = relativeTime(data.created_at) || addedFull;
     detail.innerHTML = `
       <div class="d-flex align-items-center gap-3 mb-2">
         ${initialsAvatar(data.first_name, data.last_name, true)}
@@ -69,13 +111,20 @@
       </div>
       <div class="mb-3">
         <div class="detail-row"><i data-lucide="phone"></i>
-          <a href="tel:${esc(data.phone)}">${esc(data.phone)}</a></div>
+          <a href="tel:${esc(data.phone)}">${esc(data.phone)}</a>
+          <button class="btn btn-link btn-sm p-0 ms-auto copy-btn" data-copy="${esc(data.phone)}" title="Copy phone" aria-label="Copy phone">
+            <i data-lucide="copy"></i>
+          </button></div>
         <div class="detail-row"><i data-lucide="mail"></i>
-          <a href="mailto:${esc(data.email)}">${esc(data.email)}</a></div>
+          <a href="mailto:${esc(data.email)}">${esc(data.email)}</a>
+          <button class="btn btn-link btn-sm p-0 ms-auto copy-btn" data-copy="${esc(data.email)}" title="Copy email" aria-label="Copy email">
+            <i data-lucide="copy"></i>
+          </button></div>
         <div class="detail-row"><i data-lucide="map-pin"></i> ${esc(data.city)}</div>
         <div class="detail-row">
           <span class="weather-slot" data-city="${esc(data.city)}" data-large>…</span></div>
-        <div class="detail-row text-muted small"><i data-lucide="calendar"></i> Added: ${esc(added)}</div>
+        <div class="detail-row text-muted small"><i data-lucide="calendar"></i>
+          <span title="${esc(addedFull)}">${esc(addedRelative)}</span></div>
       </div>
       <div class="d-flex flex-wrap gap-2">
         <a class="btn btn-primary btn-sm" href="tel:${esc(data.phone)}">
@@ -173,6 +222,11 @@
   }
 
   detail.addEventListener('click', (event) => {
+    const copyButton = event.target.closest('.copy-btn');
+    if (copyButton) {
+      copyText(copyButton.dataset.copy || '', copyButton);
+      return;
+    }
     const button = event.target.closest('[data-action]');
     if (!button) return;
     const data = cache.get(button.dataset.id);

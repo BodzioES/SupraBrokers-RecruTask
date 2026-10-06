@@ -34,7 +34,7 @@ def visible_contacts(user) -> object:
 
 
 def filter_contacts(params, user) -> object:
-    """Apply visibility plus the same search/sort as the list view."""
+    """Apply visibility plus search, status/city filters and sorting."""
     qs = visible_contacts(user)
     query = params.get('q', '').strip()
     if query:
@@ -45,6 +45,15 @@ def filter_contacts(params, user) -> object:
                 | Q(city__unaccent__icontains=query)
                 | Q(phone__icontains=query)
             )
+    try:
+        status_id = int(params.get('status') or 0)
+    except (TypeError, ValueError):
+        status_id = 0
+    if status_id:
+        qs = qs.filter(status_id=status_id)
+    city = (params.get('city') or '').strip()
+    if city:
+        qs = qs.filter(city__iexact=city)
     sort = params.get('sort', 'last_name')
     if sort not in ALLOWED_SORTS:
         sort = 'last_name'
@@ -80,16 +89,25 @@ class ContactListView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         sort, order = self.get_sort()
-        context['q'] = self.request.GET.get('q', '')
+        params = self.request.GET
+        context['q'] = params.get('q', '')
         context['sort'] = sort
         context['order'] = order
         context['next_order'] = 'desc' if order == 'asc' else 'asc'
+        context['selected_status'] = params.get('status', '')
+        context['selected_city'] = params.get('city', '')
         context['statuses'] = ContactStatus.objects.all()
         context['cities'] = list(
             visible_contacts(self.request.user)
             .order_by('city')
             .values_list('city', flat=True)
             .distinct()
+        )
+        context['total_count'] = visible_contacts(self.request.user).count()
+        context['is_filtered'] = bool(
+            params.get('q', '').strip()
+            or params.get('status', '')
+            or params.get('city', '')
         )
         return context
 
