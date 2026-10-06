@@ -150,6 +150,7 @@ WEATHER_USER_AGENT = os.getenv(
 WEATHER_HTTP_TIMEOUT = int(os.getenv('WEATHER_HTTP_TIMEOUT', '8'))
 WEATHER_GEO_CACHE_TIMEOUT = 24 * 3600  # coordinates rarely change
 WEATHER_CACHE_TIMEOUT = 45 * 60  # current weather freshness
+WEATHER_NEGATIVE_CACHE_TIMEOUT = 10 * 60  # failed lookups
 
 # Auth isolation (#11). No registration: users are created via createsuperuser.
 LOGIN_URL = 'login'
