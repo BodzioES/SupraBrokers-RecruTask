@@ -58,6 +58,7 @@
   <div class="col-12 col-lg-7">
     <div class="d-flex flex-column gap-2">
       {% for contact in contacts %}
+      {# Rows are clickable: contact_ui.js reads data-id and loads details. #}
       <div class="card contact-row" data-id="{{ contact.pk }}" role="button" tabindex="0">
         <div class="card-body d-flex align-items-center gap-3 py-2">
           <span class="avatar avatar-c{{ contact.avatar_color }}" aria-hidden="true">{{ contact.initials }}</span>
@@ -65,6 +66,7 @@
             <div class="contact-name">{{ contact.first_name }} {{ contact.last_name }}</div>
             <div class="contact-meta">
               <i data-lucide="map-pin"></i> {{ contact.city }}
+              {# weather.js fills every .weather-slot with data-city, once per city. #}
               &middot; <span class="weather-slot" data-city="{{ contact.city }}">—</span>
             </div>
           </div>
@@ -125,6 +127,7 @@
         </h2>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
+      {# validation.js hooks onto #contact-form; avatar-preview shows live initials. #}
       <form method="post" action="{% url 'contacts:add' %}" id="contact-form" novalidate>
         <div class="modal-body">
           {% csrf_token %}

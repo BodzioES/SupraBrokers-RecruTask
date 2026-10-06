@@ -13,7 +13,9 @@ class ContactViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        # Same isolation as the UI: own or shared contacts only.
         return visible_contacts(self.request.user).order_by('last_name', 'id')
 
     def perform_create(self, serializer):
+        # New API contacts belong to the logged-in user by default.
         serializer.save(owner=self.request.user)

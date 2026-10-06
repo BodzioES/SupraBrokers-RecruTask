@@ -26,6 +26,7 @@ def import_contacts_from_csv(uploaded_file, owner=None):
 
     added = 0
     skipped_rows = []
+    # Row numbers match the file lines: line 1 is the header row.
     for line_number, row in enumerate(reader, start=2):
         reason = None
         try:
@@ -42,6 +43,7 @@ def import_contacts_from_csv(uploaded_file, owner=None):
             elif Contact.objects.filter(email__iexact=email).exists():
                 reason = 'Duplicate email address.'
             else:
+                # Unknown CSV statuses become new rows, so nothing is lost.
                 status, _ = ContactStatus.objects.get_or_create(name=status_name)
                 contact = Contact(
                     first_name=first_name,

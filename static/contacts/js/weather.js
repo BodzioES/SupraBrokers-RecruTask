@@ -26,6 +26,7 @@
     if (!slots.length) return;
     const fresh = new Map();
     slots.forEach((slot) => {
+      // Skip slots handled before, so re-scans never duplicate requests.
       if (slot.dataset.loaded) return;
       const city = (slot.dataset.city || '').trim();
       if (!city) return;

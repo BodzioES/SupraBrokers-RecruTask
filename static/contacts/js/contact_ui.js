@@ -99,6 +99,7 @@
     if (activeRow) activeRow.classList.remove('active');
     activeRow = row || null;
     if (activeRow) activeRow.classList.add('active');
+    // Details already fetched once are reused, no second API call.
     if (cache.has(id)) {
       renderDetail(cache.get(id));
       return;
@@ -142,6 +143,7 @@
     form.querySelectorAll('.is-valid, .is-invalid').forEach((el) => {
       el.classList.remove('is-valid', 'is-invalid');
     });
+    // Programmatic fill fires no input events, so refresh the preview manually.
     form.dispatchEvent(new Event('avatar-refresh'));
     getModal().show();
   }
@@ -172,6 +174,7 @@
     deleteModalInstance.show();
   }
 
+  // One listener for buttons rendered later inside the detail panel.
   detail.addEventListener('click', (event) => {
     const button = event.target.closest('[data-action]');
     if (!button) return;

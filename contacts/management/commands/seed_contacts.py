@@ -65,6 +65,7 @@ class Command(BaseCommand):
 
         created = 0
         attempts = 0
+        # Attempts cap the loop: random duplicates must not loop forever.
         while created < count and attempts < count * 20:
             attempts += 1
             phone = ''.join(random.choices('0123456789', k=9))
@@ -87,6 +88,7 @@ class Command(BaseCommand):
                 city=random.choice(CITIES),
                 status=random.choice(statuses),
                 owner=owner,
+                # Without a demo user the contacts stay visible to everyone.
                 is_shared=owner is None,
             )
             created += 1

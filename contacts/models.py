@@ -70,6 +70,7 @@ class Contact(models.Model):
         """Uppercase initials, correct for Polish letters."""
         first = (self.first_name or '').strip()[:1].upper()
         last = (self.last_name or '').strip()[:1].upper()
+        # An empty f-string is falsy, hence the '?' fallback.
         return f'{first}{last}' or '?'
 
     @property

@@ -1,5 +1,3 @@
-import json
-
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
@@ -66,6 +64,8 @@ class ContactListView(LoginRequiredMixin, ListView):
     allowed_sorts = ALLOWED_SORTS
 
     def get_sort(self) -> tuple[str, str]:
+        # Only whitelisted values pass through, so raw GET params
+        # can never inject an arbitrary field into order_by().
         sort = self.request.GET.get('sort', 'last_name')
         if sort not in self.allowed_sorts:
             sort = 'last_name'
@@ -124,6 +124,8 @@ class ContactDeleteView(LoginRequiredMixin, OwnedContactMixin, DeleteView):
 
 
 class ContactImportView(LoginRequiredMixin, FormView):
+    """Upload a CSV file. Result is shown as toasts (counts + row reasons)."""
+
     form_class = ContactImportForm
     template_name = 'contacts/contact_import.html'
     success_url = reverse_lazy('contacts:list')
@@ -139,6 +141,7 @@ class ContactImportView(LoginRequiredMixin, FormView):
         messages.success(
             self.request, f'Imported {added} contacts, skipped {skipped}.'
         )
+        # Cap the per-row warnings so one bad file cannot flood the page.
         for line_number, reason in skipped_rows[:20]:
             messages.warning(
                 self.request, f'Row {line_number} skipped: {reason}.'
@@ -153,6 +156,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # Subquery keeps the stats scoped to contacts the user may see.
         visible_ids = visible_contacts(self.request.user).values('id')
         stats = list(
             Contact.objects.filter(id__in=visible_ids)
@@ -162,9 +166,11 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         )
         context['city_stats'] = stats
         context['total_contacts'] = visible_ids.count()
-        context['chart_data'] = json.dumps(
-            {'labels': [s['city'] for s in stats], 'data': [s['total'] for s in stats]}
-        )
+        # Plain dict on purpose: the template serializes it with json_script.
+        context['chart_data'] = {
+            'labels': [s['city'] for s in stats],
+            'data': [s['total'] for s in stats],
+        }
         return context
 
 

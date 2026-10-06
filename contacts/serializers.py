@@ -6,6 +6,7 @@ from .models import Contact, normalize_phone, validate_pl_phone
 class ContactSerializer(serializers.ModelSerializer):
     """Serializer for list/create/update. Status is writable by id."""
 
+    # Extra read-only label; the writable relation stays the status id.
     status_name = serializers.CharField(source='status.name', read_only=True)
 
     class Meta:

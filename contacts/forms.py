@@ -12,6 +12,7 @@ class ContactImportForm(forms.Form):
     )
 
     def clean_file(self):
+        # Cheap checks first: extension and size before parsing content.
         uploaded = self.cleaned_data['file']
         if not uploaded.name.lower().endswith('.csv'):
             raise ValidationError('Only .CSV files are allowed.')

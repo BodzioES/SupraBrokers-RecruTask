@@ -17,6 +17,7 @@ def normalize_city_key(city: str) -> str:
 
 
 def _fetch_json(url: str) -> object:
+    # Nominatim blocks requests without a descriptive User-Agent.
     request = urllib.request.Request(
         url, headers={'User-Agent': settings.WEATHER_USER_AGENT}
     )
@@ -42,6 +43,7 @@ def get_coordinates(city: str) -> tuple[float, float] | None:
 
 def get_weather(lat: float, lon: float) -> dict | None:
     """Fetch current weather via Open-Meteo. Cached 45 min."""
+    # Rounded coordinates share one cache entry for nearby lookups.
     lat, lon = round(lat, 2), round(lon, 2)
     key = f'weather:{lat},{lon}'
     cached = cache.get(key)

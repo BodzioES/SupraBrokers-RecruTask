@@ -14,6 +14,7 @@
   }
 
   function setState(input, valid, message) {
+    // Each input has a matching <div data-error-for="input-id"> in the template.
     const feedback = document.querySelector(`[data-error-for="${input.id}"]`);
     input.classList.remove('is-valid', 'is-invalid');
     input.classList.add(valid ? 'is-valid' : 'is-invalid');
