@@ -43,9 +43,7 @@ class ContactForm(forms.ModelForm):
                 attrs={'class': 'form-control', 'placeholder': '+48 123 456 789'}
             ),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'city': forms.TextInput(
-                attrs={'class': 'form-control', 'list': 'city-list'}
-            ),
+            'city': forms.TextInput(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-select'}),
             'is_shared': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }

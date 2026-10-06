@@ -19,7 +19,7 @@
             <i class="bi bi-download"></i> Download sample CSV
           </a>
         </p>
-        <form method="post" enctype="multipart/form-data" id="import-form">
+        <form method="post" enctype="multipart/form-data">
           {% csrf_token %}
           {% if form.non_field_errors %}
           <div class="alert alert-danger">{{ form.non_field_errors }}</div>
@@ -30,7 +30,7 @@
             {% if form.file.errors %}<div class="text-danger small">{{ form.file.errors }}</div>{% endif %}
           </div>
           <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary" data-save-button>
+            <button type="submit" class="btn btn-primary">
               <i class="bi bi-check-lg"></i> Import
             </button>
             <a href="{% url 'contacts:list' %}" class="btn btn-outline-secondary">Cancel</a>
@@ -40,22 +40,4 @@
     </div>
   </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-(function () {
-  const importForm = document.getElementById('import-form');
-  if (!importForm) return;
-  importForm.addEventListener('submit', () => {
-    const saveButton = importForm.querySelector('[data-save-button]');
-    if (saveButton && !saveButton.disabled) {
-      saveButton.disabled = true;
-      saveButton.innerHTML =
-        '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> ' +
-        saveButton.textContent.trim();
-    }
-  });
-})();
-</script>
 {% endblock %}

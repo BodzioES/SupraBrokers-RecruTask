@@ -122,22 +122,6 @@ body {
   outline-offset: 2px;
 }
 
-.copy-btn {
-  color: var(--bs-secondary-color);
-  text-decoration: none;
-  opacity: 0.7;
-}
-
-.copy-btn:hover {
-  opacity: 1;
-  color: var(--bs-primary);
-}
-
-.copy-btn.copied {
-  color: var(--bs-success);
-  opacity: 1;
-}
-
 @media (max-width: 575px) {
   .contact-row .flex-grow-1 {
     min-width: 0;
@@ -288,46 +272,7 @@ body {
   min-height: 240px;
 }
 
-.weather-skeleton {
-  display: inline-block;
-  width: 120px;
-  height: 0.9em;
-  border-radius: 0.375rem;
-  background: linear-gradient(
-    90deg,
-    var(--bs-secondary-bg) 25%,
-    var(--bs-tertiary-bg) 50%,
-    var(--bs-secondary-bg) 75%
-  );
-  background-size: 200% 100%;
-  animation: weather-shimmer 1.2s infinite;
-  vertical-align: middle;
-}
 
-@keyframes weather-shimmer {
-  to {
-    background-position: -200% 0;
-  }
-}
-
-.weather-detail {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.weather-detail > .lucide {
-  width: 2rem;
-  height: 2rem;
-  color: var(--bs-primary);
-  flex-shrink: 0;
-}
-
-.weather-slot .lucide {
-  width: 0.95rem;
-  height: 0.95rem;
-  vertical-align: -0.12em;
-}
 
 .status-col {
   width: 110px;

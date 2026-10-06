@@ -34,7 +34,7 @@ def visible_contacts(user) -> object:
 
 
 def filter_contacts(params, user) -> object:
-    """Apply visibility plus search, status/city filters and sorting."""
+    """Apply visibility plus search and sorting."""
     qs = visible_contacts(user)
     query = params.get('q', '').strip()
     if query:
@@ -45,15 +45,6 @@ def filter_contacts(params, user) -> object:
                 | Q(city__unaccent__icontains=query)
                 | Q(phone__icontains=query)
             )
-    try:
-        status_id = int(params.get('status') or 0)
-    except (TypeError, ValueError):
-        status_id = 0
-    if status_id:
-        qs = qs.filter(status_id=status_id)
-    city = (params.get('city') or '').strip()
-    if city:
-        qs = qs.filter(city__iexact=city)
     sort = params.get('sort', 'last_name')
     if sort not in ALLOWED_SORTS:
         sort = 'last_name'
@@ -89,44 +80,15 @@ class ContactListView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         sort, order = self.get_sort()
-        params = self.request.GET
-        context['q'] = params.get('q', '')
+        context['q'] = self.request.GET.get('q', '')
         context['sort'] = sort
         context['order'] = order
         context['next_order'] = 'desc' if order == 'asc' else 'asc'
-        context['selected_status'] = params.get('status', '')
-        context['selected_city'] = params.get('city', '')
         context['statuses'] = ContactStatus.objects.all()
-        context['cities'] = list(
-            visible_contacts(self.request.user)
-            .order_by('city')
-            .values_list('city', flat=True)
-            .distinct()
-        )
-        context['total_count'] = visible_contacts(self.request.user).count()
-        context['is_filtered'] = bool(
-            params.get('q', '').strip()
-            or params.get('status', '')
-            or params.get('city', '')
-        )
         return context
 
 
-class CityDatalistMixin:
-    """City suggestions for the datalist, scoped to visible contacts."""
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['cities'] = list(
-            visible_contacts(self.request.user)
-            .order_by('city')
-            .values_list('city', flat=True)
-            .distinct()
-        )
-        return context
-
-
-class ContactCreateView(LoginRequiredMixin, CityDatalistMixin, SuccessMessageMixin, CreateView):
+class ContactCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Contact
     form_class = ContactForm
     template_name = 'contacts/contact_form.html'
@@ -146,11 +108,7 @@ class OwnedContactMixin:
 
 
 class ContactUpdateView(
-    LoginRequiredMixin,
-    OwnedContactMixin,
-    CityDatalistMixin,
-    SuccessMessageMixin,
-    UpdateView,
+    LoginRequiredMixin, OwnedContactMixin, SuccessMessageMixin, UpdateView
 ):
     model = Contact
     form_class = ContactForm
@@ -214,8 +172,6 @@ class WeatherView(LoginRequiredMixin, View):
     """JSON endpoint for one city. Used by weather.js after page load."""
 
     def get(self, request):
-        import time
-
         city = request.GET.get('city', '').strip()
         if not city:
             return JsonResponse({'error': 'Missing city.'}, status=400)
@@ -227,15 +183,7 @@ class WeatherView(LoginRequiredMixin, View):
             )
         if weather is None:
             return JsonResponse({'error': 'City not found.'}, status=404)
-        fetched_at = weather.pop('fetched_at', None)
-        updated_minutes_ago = (
-            max(0, int((time.time() - fetched_at) / 60))
-            if fetched_at
-            else 0
-        )
-        return JsonResponse(
-            {'city': city, 'updated_minutes_ago': updated_minutes_ago, **weather}
-        )
+        return JsonResponse({'city': city, **weather})
 
 
 class ContactExportView(LoginRequiredMixin, View):
