@@ -168,6 +168,8 @@ class WeatherView(LoginRequiredMixin, View):
     """JSON endpoint for one city. Used by weather.js after page load."""
 
     def get(self, request):
+        import time
+
         city = request.GET.get('city', '').strip()
         if not city:
             return JsonResponse({'error': 'Missing city.'}, status=400)
@@ -179,7 +181,15 @@ class WeatherView(LoginRequiredMixin, View):
             )
         if weather is None:
             return JsonResponse({'error': 'City not found.'}, status=404)
-        return JsonResponse({'city': city, **weather})
+        fetched_at = weather.pop('fetched_at', None)
+        updated_minutes_ago = (
+            max(0, int((time.time() - fetched_at) / 60))
+            if fetched_at
+            else 0
+        )
+        return JsonResponse(
+            {'city': city, 'updated_minutes_ago': updated_minutes_ago, **weather}
+        )
 
 
 class ContactExportView(LoginRequiredMixin, View):

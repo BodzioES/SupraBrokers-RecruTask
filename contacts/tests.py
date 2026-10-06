@@ -188,6 +188,54 @@ class AvatarInitialsTest(TestCase):
         self.assertIn(first, range(8))
 
 
+class WeatherCacheTest(TestCase):
+    """City key normalization and short negative cache for misses."""
+
+    def setUp(self):
+        from django.core.cache import cache
+
+        cache.clear()
+
+    def test_city_key_ignores_case_and_diacritics(self):
+        from .weather import normalize_city_key
+
+        self.assertEqual(normalize_city_key('Kraków'), normalize_city_key('krakow'))
+        self.assertEqual(normalize_city_key('Łódź'), normalize_city_key('lodz'))
+
+    def test_unknown_city_is_cached_negatively(self):
+        from unittest import mock
+
+        from . import weather as weather_module
+
+        with mock.patch.object(
+            weather_module, '_fetch_json', return_value=[]
+        ) as fetch:
+            self.assertIsNone(weather_module.get_city_weather('NoSuchCityXYZ'))
+            self.assertIsNone(weather_module.get_city_weather('NoSuchCityXYZ'))
+            self.assertEqual(fetch.call_count, 1)
+
+    def test_weather_result_has_code_and_timestamp(self):
+        from unittest import mock
+
+        from . import weather as weather_module
+
+        geo = [{'lat': '52.23', 'lon': '21.01'}]
+        meteo = {
+            'current': {
+                'temperature_2m': 16.5,
+                'relative_humidity_2m': 63,
+                'wind_speed_10m': 2.9,
+                'weather_code': 2,
+            }
+        }
+        with mock.patch.object(
+            weather_module, '_fetch_json', side_effect=[geo, meteo]
+        ):
+            result = weather_module.get_city_weather('Warszawa')
+        self.assertEqual(result['weather_code'], 2)
+        self.assertIn('fetched_at', result)
+
+
 class UnaccentSearchTest(TestCase):
     """Diacritics work both ways: Krakow finds Kraków and vice versa."""
 
