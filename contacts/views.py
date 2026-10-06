@@ -39,12 +39,12 @@ def filter_contacts(params, user) -> object:
     query = params.get('q', '').strip()
     if query:
         qs = qs.filter(
-            Q(first_name__icontains=query)
-            | Q(last_name__icontains=query)
-            | Q(email__icontains=query)
-            | Q(city__icontains=query)
-            | Q(phone__icontains=query)
-        )
+                Q(first_name__unaccent__icontains=query)
+                | Q(last_name__unaccent__icontains=query)
+                | Q(email__icontains=query)
+                | Q(city__unaccent__icontains=query)
+                | Q(phone__icontains=query)
+            )
     sort = params.get('sort', 'last_name')
     if sort not in ALLOWED_SORTS:
         sort = 'last_name'

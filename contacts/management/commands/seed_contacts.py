@@ -1,25 +1,49 @@
 import random
+import unicodedata
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
 from contacts.models import Contact, ContactStatus
 
-FIRST_NAMES = [
-    'Jan', 'Anna', 'Piotr', 'Katarzyna', 'Marek', 'Agnieszka', 'Tomasz',
-    'Magdalena', 'Michal', 'Ewa', 'Lukasz', 'Natalia', 'Adam', 'Paulina',
-    'Bartosz', 'Karolina', 'Kamil', 'Monika', 'Damian', 'Sylwia',
-]
-LAST_NAMES = [
-    'Kowalski', 'Nowak', 'Zielinski', 'Wisniewski', 'Wojcik', 'Kaminski',
-    'Lewandowski', 'Szymanski', 'Wozniak', 'Dabrowski', 'Kozlowski',
-    'Jankowski', 'Mazur', 'Wojciechowski', 'Kwiatkowski', 'Krawczyk',
-    'Piotrowski', 'Grabowski', 'Nowakowski', 'Pawlowski',
+# Gender-matched first/last name pairs with correct Polish diacritics.
+NAME_PAIRS = [
+    ('Anna', 'Dąbrowska'),
+    ('Łukasz', 'Kowalski'),
+    ('Agnieszka', 'Kowalska'),
+    ('Małgorzata', 'Wiśniewska'),
+    ('Paweł', 'Wójcik'),
+    ('Zuzanna', 'Kamińska'),
+    ('Józef', 'Żak'),
+    ('Katarzyna', 'Zielińska'),
+    ('Marek', 'Lewandowski'),
+    ('Ewa', 'Szymańska'),
+    ('Tomasz', 'Woźniak'),
+    ('Magdalena', 'Dąbrowska'),
+    ('Michał', 'Kozłowski'),
+    ('Natalia', 'Jankowska'),
+    ('Adam', 'Mazur'),
+    ('Paulina', 'Wojciechowska'),
+    ('Bartosz', 'Krawczyk'),
+    ('Karolina', 'Piotrowska'),
+    ('Kamil', 'Grabowski'),
+    ('Monika', 'Nowakowska'),
+    ('Damian', 'Pawłowski'),
+    ('Sylwia', 'Kamińska'),
+    ('Jan', 'Kowalczyk'),
+    ('Piotr', 'Nowak'),
 ]
 CITIES = [
-    'Warszawa', 'Krakow', 'Gdansk', 'Wroclaw', 'Poznan', 'Lodz',
-    'Szczecin', 'Katowice', 'Lublin', 'Gdynia',
+    'Warszawa', 'Kraków', 'Gdańsk', 'Wrocław', 'Poznań', 'Łódź',
+    'Szczecin', 'Katowice', 'Lublin', 'Gdynia', 'Białystok',
 ]
+
+
+def ascii_email_part(value: str) -> str:
+    """Strip diacritics so generated emails stay plain ASCII."""
+    normalized = unicodedata.normalize('NFKD', value)
+    stripped = ''.join(c for c in normalized if not unicodedata.combining(c))
+    return stripped.replace('ł', 'l').replace('Ł', 'L').lower()
 
 
 class Command(BaseCommand):
@@ -46,18 +70,18 @@ class Command(BaseCommand):
             phone = ''.join(random.choices('0123456789', k=9))
             if random.random() < 0.3:
                 phone = '+48' + phone
+            first_name, last_name = random.choice(NAME_PAIRS)
             email = (
-                f'{random.choice(FIRST_NAMES).lower()}.'
-                f'{random.choice(LAST_NAMES).lower()}{random.randint(1, 9999)}'
-                '@example.com'
+                f'{ascii_email_part(first_name)}.{ascii_email_part(last_name)}'
+                f'{random.randint(1, 9999)}@example.com'
             )
             if Contact.objects.filter(phone=phone.replace(' ', '')).exists():
                 continue
             if Contact.objects.filter(email__iexact=email).exists():
                 continue
             Contact.objects.create(
-                first_name=random.choice(FIRST_NAMES),
-                last_name=random.choice(LAST_NAMES),
+                first_name=first_name,
+                last_name=last_name,
                 phone=phone,
                 email=email,
                 city=random.choice(CITIES),

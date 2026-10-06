@@ -7,6 +7,7 @@ from rest_framework.test import APITestCase
 
 from .models import Contact, ContactStatus
 from .services import import_contacts_from_csv
+from .views import filter_contacts
 
 
 def make_status(name='new'):
@@ -168,3 +169,27 @@ class ContactIsolationTest(TestCase):
 
     def test_login_is_required(self):
         self.assertEqual(self.client.get(reverse('contacts:list')).status_code, 302)
+
+
+class UnaccentSearchTest(TestCase):
+    """Diacritics work both ways: Krakow finds Kraków and vice versa."""
+
+    def setUp(self):
+        self.user = User.objects.create_user('searcher', password='pass')
+        self.contact = make_contact(
+            first_name='Łukasz', last_name='Żuk', city='Kraków',
+            phone='444444444', email='lukasz@example.com',
+            status=make_status(), owner=self.user,
+        )
+
+    def test_ascii_query_finds_diacritic_contact(self):
+        results = filter_contacts({'q': 'Krakow'}, self.user)
+        self.assertIn(self.contact, list(results))
+        results = filter_contacts({'q': 'Lukasz'}, self.user)
+        self.assertIn(self.contact, list(results))
+
+    def test_diacritic_query_finds_contact(self):
+        results = filter_contacts({'q': 'Kraków'}, self.user)
+        self.assertIn(self.contact, list(results))
+        results = filter_contacts({'q': 'Żuk'}, self.user)
+        self.assertIn(self.contact, list(results))
