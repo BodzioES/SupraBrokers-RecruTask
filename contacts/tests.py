@@ -171,6 +171,23 @@ class ContactIsolationTest(TestCase):
         self.assertEqual(self.client.get(reverse('contacts:list')).status_code, 302)
 
 
+class AvatarInitialsTest(TestCase):
+    """Initials handle Polish letters; color is deterministic."""
+
+    def test_initials_with_diacritics(self):
+        contact = make_contact(first_name='Łukasz', last_name='Żuk')
+        self.assertEqual(contact.initials, 'ŁŻ')
+
+    def test_avatar_color_is_deterministic(self):
+        first = make_contact(first_name='Anna', last_name='Nowak').avatar_color
+        second = make_contact(
+            first_name='Anna', last_name='Nowak',
+            phone='999999999', email='other@example.com',
+        ).avatar_color
+        self.assertEqual(first, second)
+        self.assertIn(first, range(8))
+
+
 class UnaccentSearchTest(TestCase):
     """Diacritics work both ways: Krakow finds Kraków and vice versa."""
 

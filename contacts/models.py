@@ -65,6 +65,19 @@ class Contact(models.Model):
     def __str__(self) -> str:
         return f'{self.first_name} {self.last_name} ({self.city})'
 
+    @property
+    def initials(self) -> str:
+        """Uppercase initials, correct for Polish letters."""
+        first = (self.first_name or '').strip()[:1].upper()
+        last = (self.last_name or '').strip()[:1].upper()
+        return f'{first}{last}' or '?'
+
+    @property
+    def avatar_color(self) -> int:
+        """Deterministic color 0-7 from the name (mirrored in contact_ui.js)."""
+        total = sum(ord(c) for c in f'{self.first_name}{self.last_name}'.lower())
+        return total % 8
+
     def clean(self) -> None:
         super().clean()
         # Normalize before uniqueness check so formatted duplicates collide.

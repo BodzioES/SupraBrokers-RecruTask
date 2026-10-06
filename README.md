@@ -26,6 +26,11 @@ python manage.py migrate
 python manage.py runserver
 ```
 
+## Decisions
+- Avatars are colored initial circles computed from the name. Photo upload
+  was deliberately skipped to keep the code small; it can be added later
+  (ImageField + MEDIA + validation + old file cleanup).
+
 ## Project status
 - [x] #1 Setup base
 - [ ] #2 Models

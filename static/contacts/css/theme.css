@@ -32,7 +32,17 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  font-weight: 600;
 }
+
+.avatar-c0 { background-color: #e9f0fd; color: #2f5aa8; }
+.avatar-c1 { background-color: #efebfc; color: #5b54b8; }
+.avatar-c2 { background-color: #e6f6ec; color: #2e7d4f; }
+.avatar-c3 { background-color: #fdecec; color: #b3372f; }
+.avatar-c4 { background-color: #fdf3d7; color: #8a6d00; }
+.avatar-c5 { background-color: #e2f4f1; color: #22705f; }
+.avatar-c6 { background-color: #fdeef4; color: #a9245f; }
+.avatar-c7 { background-color: #ececf0; color: #5b5f6a; }
 
 .avatar-lg {
   width: 72px;
