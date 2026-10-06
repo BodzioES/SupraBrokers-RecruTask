@@ -46,6 +46,11 @@
             <div class="col-md-6">
               <label class="form-label" for="{{ form.city.id_for_label }}">City</label>
               {{ form.city }}
+              <datalist id="city-list">
+                {% for city in cities %}
+                <option value="{{ city }}"></option>
+                {% endfor %}
+              </datalist>
               <div class="invalid-feedback" data-error-for="{{ form.city.id_for_label }}"></div>
               {% if form.city.errors %}<div class="text-danger small">{{ form.city.errors }}</div>{% endif %}
             </div>
@@ -58,11 +63,12 @@
               <div class="form-check">
                 {{ form.is_shared }}
                 <label class="form-check-label" for="{{ form.is_shared.id_for_label }}">Shared contact</label>
+                <div class="form-text">Shared contacts are visible to every user.</div>
               </div>
             </div>
           </div>
           <div class="d-flex gap-2 mt-4">
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-primary" data-save-button>
               <i class="bi bi-check-lg"></i> Save
             </button>
             <a href="{% url 'contacts:list' %}" class="btn btn-outline-secondary">Cancel</a>

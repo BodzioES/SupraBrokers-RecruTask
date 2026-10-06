@@ -85,10 +85,30 @@ class ContactListView(LoginRequiredMixin, ListView):
         context['order'] = order
         context['next_order'] = 'desc' if order == 'asc' else 'asc'
         context['statuses'] = ContactStatus.objects.all()
+        context['cities'] = list(
+            visible_contacts(self.request.user)
+            .order_by('city')
+            .values_list('city', flat=True)
+            .distinct()
+        )
         return context
 
 
-class ContactCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+class CityDatalistMixin:
+    """City suggestions for the datalist, scoped to visible contacts."""
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['cities'] = list(
+            visible_contacts(self.request.user)
+            .order_by('city')
+            .values_list('city', flat=True)
+            .distinct()
+        )
+        return context
+
+
+class ContactCreateView(LoginRequiredMixin, CityDatalistMixin, SuccessMessageMixin, CreateView):
     model = Contact
     form_class = ContactForm
     template_name = 'contacts/contact_form.html'
@@ -108,7 +128,11 @@ class OwnedContactMixin:
 
 
 class ContactUpdateView(
-    LoginRequiredMixin, OwnedContactMixin, SuccessMessageMixin, UpdateView
+    LoginRequiredMixin,
+    OwnedContactMixin,
+    CityDatalistMixin,
+    SuccessMessageMixin,
+    UpdateView,
 ):
     model = Contact
     form_class = ContactForm
@@ -130,7 +154,7 @@ class ContactImportView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         try:
-            added, skipped = import_contacts_from_csv(
+            added, skipped, skipped_rows = import_contacts_from_csv(
                 form.cleaned_data['file'], owner=self.request.user
             )
         except ValidationError as exc:
@@ -139,6 +163,10 @@ class ContactImportView(LoginRequiredMixin, FormView):
         messages.success(
             self.request, f'Imported {added} contacts, skipped {skipped}.'
         )
+        for line_number, reason in skipped_rows[:20]:
+            messages.warning(
+                self.request, f'Row {line_number} skipped: {reason}.'
+            )
         return super().form_valid(form)
 
 
@@ -201,8 +229,10 @@ class ContactExportView(LoginRequiredMixin, View):
         from django.http import HttpResponse
 
         contacts = filter_contacts(request.GET, request.user)
-        response = HttpResponse(content_type='text/csv')
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
         response['Content-Disposition'] = 'attachment; filename="contacts.csv"'
+        # BOM so Excel shows diacritics correctly.
+        response.write('\ufeff')
         writer = csv.writer(response)
         writer.writerow(
             ['first_name', 'last_name', 'phone', 'email', 'city', 'status', 'created_at']

@@ -69,6 +69,17 @@
       const input = form.querySelector(`[name="${name}"]`);
       if (input && !validateField(input)) valid = false;
     });
-    if (!valid) event.preventDefault();
+    if (!valid) {
+      event.preventDefault();
+      return;
+    }
+    // Prevent double submit: disable the save button with a spinner.
+    const saveButton = form.querySelector('[data-save-button]');
+    if (saveButton && !saveButton.disabled) {
+      saveButton.disabled = true;
+      saveButton.innerHTML =
+        '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> ' +
+        saveButton.textContent.trim();
+    }
   });
 })();

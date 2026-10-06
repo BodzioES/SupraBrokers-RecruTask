@@ -133,10 +133,34 @@ class CsvImportTest(TestCase):
         uploaded = SimpleUploadedFile(
             'contacts.csv', csv_content.encode('utf-8'), content_type='text/csv'
         )
-        added, skipped = import_contacts_from_csv(uploaded)
+        added, skipped, skipped_rows = import_contacts_from_csv(uploaded)
         self.assertEqual(added, 1)
         self.assertEqual(skipped, 1)
+        self.assertEqual(len(skipped_rows), 1)
+        self.assertIn('Duplicate', skipped_rows[0][1])
         self.assertTrue(Contact.objects.filter(email='ewa@example.com').exists())
+
+    def test_import_reports_reasons_and_handles_bom(self):
+        csv_content = (
+            'first_name,last_name,phone,email,city,status\n'
+            'Anna,Dąbrowska,111222333,anna@example.com,Kraków,new\n'
+            'Anna,Dąbrowska,111222333,anna@example.com,Kraków,new\n'
+            'Jan,Kowalski,444555666,not-an-email,Warszawa,new\n'
+        )
+        import codecs
+
+        uploaded = SimpleUploadedFile(
+            'contacts.csv',
+            codecs.BOM_UTF8 + csv_content.encode('utf-8'),
+            content_type='text/csv',
+        )
+        added, skipped, skipped_rows = import_contacts_from_csv(uploaded)
+        self.assertEqual(added, 1)
+        self.assertEqual(skipped, 2)
+        reasons = [reason for _, reason in skipped_rows]
+        self.assertTrue(any('Duplicate' in reason for reason in reasons))
+        contact = Contact.objects.get(email='anna@example.com')
+        self.assertEqual(contact.city, 'Kraków')
 
 
 class ContactIsolationTest(TestCase):

@@ -158,6 +158,12 @@
     addButton.addEventListener('click', () => openModal('add'));
   }
 
+  // Autofocus the first field every time the modal opens.
+  modalEl.addEventListener('shown.bs.modal', () => {
+    const first = form.querySelector('[name="first_name"]');
+    if (first) first.focus();
+  });
+
   function openDeleteModal(data) {
     if (!deleteModalEl || !deleteForm || !deleteName) return;
     if (!deleteModalInstance) deleteModalInstance = new bootstrap.Modal(deleteModalEl);
