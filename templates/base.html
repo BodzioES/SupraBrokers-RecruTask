@@ -5,6 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}SupraBrokers Contacts{% endblock %}</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='12' fill='%230d6efd'/%3E%3Ccircle cx='12' cy='9' r='4' fill='white'/%3E%3Cpath d='M4 20c1.5-4 5-5.5 8-5.5s6.5 1.5 8 5.5' stroke='white' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
   <script>
     // Apply saved theme before CSS loads to avoid a flash.
     (function () {
@@ -110,23 +111,23 @@
       <div class="col-12 col-md-6">
         <div class="fw-semibold">SupraBrokers</div>
         <p class="text-muted small mb-0">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+          Simple contact manager with weather, import and a REST API.
         </p>
       </div>
       <div class="col-6 col-md-3">
         <div class="fw-semibold small mb-2">Navigation</div>
-        <ul class="list-unstyled small mb-0 text-muted">
-          <li>Lorem ipsum</li>
-          <li>Lorem ipsum</li>
-          <li>Lorem ipsum</li>
+        <ul class="list-unstyled small mb-0">
+          <li><a class="footer-link" href="{% url 'contacts:list' %}">Contacts</a></li>
+          <li><a class="footer-link" href="{% url 'contacts:dashboard' %}">Dashboard</a></li>
+          <li><a class="footer-link" href="{% url 'contacts:import' %}">Import</a></li>
         </ul>
       </div>
       <div class="col-6 col-md-3">
         <div class="fw-semibold small mb-2">Developer</div>
-        <ul class="list-unstyled small mb-0 text-muted">
-          <li>Lorem ipsum</li>
-          <li>Lorem ipsum</li>
-          <li>Lorem ipsum</li>
+        <ul class="list-unstyled small mb-0">
+          <li><a class="footer-link" href="https://github.com/BodzioES/SupraBrokers-RecruTask">GitHub repository</a></li>
+          <li><a class="footer-link" href="/api/contacts/">API docs</a></li>
+          <li><a class="footer-link" href="/admin/">Admin panel</a></li>
         </ul>
       </div>
     </div>
