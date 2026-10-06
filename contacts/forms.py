@@ -35,13 +35,17 @@ class ContactForm(forms.ModelForm):
             'is_shared',
         ]
         widgets = {
-            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'first_name': forms.TextInput(
+                attrs={'class': 'form-control', 'autofocus': True}
+            ),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
             'phone': forms.TextInput(
                 attrs={'class': 'form-control', 'placeholder': '+48 123 456 789'}
             ),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'city': forms.TextInput(attrs={'class': 'form-control'}),
+            'city': forms.TextInput(
+                attrs={'class': 'form-control', 'list': 'city-list'}
+            ),
             'status': forms.Select(attrs={'class': 'form-select'}),
             'is_shared': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }

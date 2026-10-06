@@ -152,7 +152,12 @@
             </div>
             <div class="col-md-6">
               <label class="form-label" for="id_city">City</label>
-              <input type="text" name="city" id="id_city" class="form-control" required>
+              <input type="text" name="city" id="id_city" class="form-control" list="city-list" required>
+              <datalist id="city-list">
+                {% for city in cities %}
+                <option value="{{ city }}"></option>
+                {% endfor %}
+              </datalist>
               <div class="invalid-feedback" data-error-for="id_city"></div>
             </div>
             <div class="col-md-6">
@@ -167,13 +172,14 @@
               <div class="form-check">
                 <input type="checkbox" name="is_shared" id="id_is_shared" class="form-check-input">
                 <label class="form-check-label" for="id_is_shared">Shared contact</label>
+                <div class="form-text">Shared contacts are visible to every user.</div>
               </div>
             </div>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary"><i data-lucide="check"></i>Save</button>
+          <button type="submit" class="btn btn-primary" data-save-button><i data-lucide="check"></i>Save</button>
         </div>
       </form>
     </div>
