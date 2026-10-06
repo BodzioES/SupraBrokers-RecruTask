@@ -8,7 +8,8 @@
   <div class="col-12 col-lg-8">
     <div class="card shadow-sm">
       <div class="card-body">
-        <h1 class="h4 mb-3">
+        <h1 class="h4 mb-3 d-flex align-items-center gap-2">
+          {% if object %}<span class="avatar avatar-c{{ object.avatar_color }}" id="avatar-preview" aria-hidden="true">{{ object.initials }}</span>{% else %}<span class="avatar avatar-c0" id="avatar-preview" aria-hidden="true">?</span>{% endif %}
           {% if object %}<i class="bi bi-pencil"></i> Edit contact{% else %}<i class="bi bi-plus-circle"></i> Add contact{% endif %}
         </h1>
         <form method="post" id="contact-form" novalidate>

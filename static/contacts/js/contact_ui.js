@@ -4,7 +4,9 @@
   const detail = document.getElementById('contact-detail');
   const modalEl = document.getElementById('contact-modal');
   const form = document.getElementById('contact-form');
-  const modalTitle = document.getElementById('contact-modal-title');
+  const modalTitle =
+    document.getElementById('contact-modal-title-text') ||
+    document.getElementById('contact-modal-title');
   const deleteModalEl = document.getElementById('delete-modal');
   const deleteForm = document.getElementById('delete-form');
   const deleteName = document.getElementById('delete-name');
@@ -28,11 +30,15 @@
       .replace(/"/g, '&quot;');
   }
 
-  function avatarLg() {
-    return `<span class="avatar avatar-lg" aria-hidden="true">
-      <svg viewBox="0 0 24 24" width="40" height="40" fill="currentColor">
-        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-      </svg></span>`;
+  // Same initials + color algorithm as Contact.initials/avatar_color.
+  function initialsAvatar(firstName, lastName, large) {
+    const first = (firstName || '').trim().charAt(0).toUpperCase();
+    const last = (lastName || '').trim().charAt(0).toUpperCase();
+    const combined = `${firstName || ''}${lastName || ''}`.toLowerCase();
+    let total = 0;
+    for (const char of combined) total += char.codePointAt(0);
+    const color = total % 8;
+    return `<span class="avatar ${large ? 'avatar-lg' : ''} avatar-c${color}" aria-hidden="true">${esc(first + last)}</span>`;
   }
 
   function statusClass(name) {
@@ -55,7 +61,7 @@
     const added = (data.created_at || '').slice(0, 16).replace('T', ' ');
     detail.innerHTML = `
       <div class="d-flex align-items-center gap-3 mb-2">
-        ${avatarLg()}
+        ${initialsAvatar(data.first_name, data.last_name, true)}
         <div>
           <h2 class="h5 mb-1 fw-semibold">${esc(data.first_name)} ${esc(data.last_name)}</h2>
           <span class="status-badge ${statusClass(data.status_name)}">${esc(displayName(data.status_name))}</span>
@@ -136,6 +142,7 @@
     form.querySelectorAll('.is-valid, .is-invalid').forEach((el) => {
       el.classList.remove('is-valid', 'is-invalid');
     });
+    form.dispatchEvent(new Event('avatar-refresh'));
     getModal().show();
   }
 

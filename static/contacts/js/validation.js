@@ -35,10 +35,33 @@
     return true;
   }
 
+  // Live initials preview (same algorithm as Contact.initials/avatar_color).
+  const preview = document.getElementById('avatar-preview');
+  function updatePreview() {
+    if (!preview) return;
+    const firstInput = form.querySelector('[name="first_name"]');
+    const lastInput = form.querySelector('[name="last_name"]');
+    const first = (firstInput ? firstInput.value : '').trim().charAt(0).toUpperCase();
+    const last = (lastInput ? lastInput.value : '').trim().charAt(0).toUpperCase();
+    const combined = `${firstInput ? firstInput.value : ''}${lastInput ? lastInput.value : ''}`.toLowerCase();
+    let total = 0;
+    for (const char of combined) total += char.codePointAt(0);
+    preview.className = `avatar avatar-c${total % 8}`;
+    preview.textContent = `${first}${last}` || '?';
+  }
+
   ['email', 'phone', 'first_name', 'last_name', 'city'].forEach((name) => {
     const input = form.querySelector(`[name="${name}"]`);
-    if (input) input.addEventListener('input', () => validateField(input));
+    if (input) {
+      input.addEventListener('input', () => {
+        validateField(input);
+        if (name === 'first_name' || name === 'last_name') updatePreview();
+      });
+    }
   });
+  updatePreview();
+  // The add/edit modal fills fields programmatically (no input events).
+  form.addEventListener('avatar-refresh', updatePreview);
 
   form.addEventListener('submit', (event) => {
     let valid = true;
