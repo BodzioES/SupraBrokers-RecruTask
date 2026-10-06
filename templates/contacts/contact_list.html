@@ -1,123 +1,213 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Contacts — SupraBrokers{% endblock %}
 
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-  <h1 class="h3 mb-0"><i class="bi bi-person-lines-fill"></i> Contacts</h1>
-  <div class="d-flex align-items-center gap-2">
-    <span class="text-muted small">
+  <div>
+    <h1 class="h4 mb-0 fw-semibold">Contacts</h1>
+    <p class="text-muted small mb-0">
       {% if page_obj %}{{ page_obj.paginator.count }} total{% endif %}
-    </span>
-    <a href="{% url 'contacts:add' %}" class="btn btn-primary btn-sm">
-      <i class="bi bi-plus-circle"></i> Add contact
-    </a>
+    </p>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <button id="add-contact-btn" class="btn btn-primary btn-sm" type="button">
+      <i data-lucide="plus"></i>Add New
+    </button>
     <a href="{% url 'contacts:import' %}" class="btn btn-outline-secondary btn-sm">
-      <i class="bi bi-upload"></i> Import
+      <i data-lucide="upload"></i>Import
     </a>
     <a href="{% url 'contacts:export' %}?q={{ q|urlencode }}&sort={{ sort }}&order={{ order }}" class="btn btn-outline-secondary btn-sm">
-      <i class="bi bi-download"></i> Export
+      <i data-lucide="download"></i>Export
     </a>
   </div>
 </div>
 
-<form method="get" class="row g-2 mb-3">
+<form method="get" class="row g-2 mb-3 align-items-center">
   <div class="col-12 col-md-6">
-    <input type="text" name="q" value="{{ q }}" class="form-control"
-           placeholder="Search name, city, email or phone...">
+    <div class="position-relative">
+      <input type="text" name="q" value="{{ q }}" class="form-control search-bar ps-5"
+             placeholder="Search name, city, email or phone...">
+      <i data-lucide="search" class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+    </div>
   </div>
   <input type="hidden" name="sort" value="{{ sort }}">
   <input type="hidden" name="order" value="{{ order }}">
   <div class="col-6 col-md-auto">
-    <button type="submit" class="btn btn-primary w-100">
-      <i class="bi bi-search"></i> Search
-    </button>
+    <button type="submit" class="btn btn-primary w-100">Search</button>
   </div>
   <div class="col-6 col-md-auto">
     <a href="{% url 'contacts:list' %}" class="btn btn-outline-secondary w-100">Clear</a>
   </div>
+  <div class="col-12 col-md-auto ms-md-auto">
+    <div class="btn-group w-100" role="group" aria-label="Sort">
+      <a class="btn btn-outline-secondary btn-sm {% if sort == 'last_name' %}active{% endif %}"
+         href="?q={{ q|urlencode }}&sort=last_name&order={% if sort == 'last_name' %}{{ next_order }}{% else %}asc{% endif %}">
+        Surname {% if sort == 'last_name' %}<i data-lucide="{% if order == 'asc' %}arrow-up{% else %}arrow-down{% endif %}"></i>{% endif %}
+      </a>
+      <a class="btn btn-outline-secondary btn-sm {% if sort == 'created_at' %}active{% endif %}"
+         href="?q={{ q|urlencode }}&sort=created_at&order={% if sort == 'created_at' %}{{ next_order }}{% else %}desc{% endif %}">
+        Added {% if sort == 'created_at' %}<i data-lucide="{% if order == 'asc' %}arrow-up{% else %}arrow-down{% endif %}"></i>{% endif %}
+      </a>
+    </div>
+  </div>
 </form>
 
-<div class="card shadow-sm">
-  <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0">
-      <thead class="table-light">
-        <tr>
-          <th>
-            <a href="?q={{ q|urlencode }}&sort=last_name&order={% if sort == 'last_name' %}{{ next_order }}{% else %}asc{% endif %}">
-              Last name
-              {% if sort == 'last_name' %}{% if order == 'asc' %}▲{% else %}▼{% endif %}{% endif %}
-            </a>
-          </th>
-          <th>First name</th>
-          <th>City</th>
-          <th>Status</th>
-          <th>Weather</th>
-          <th>
-            <a href="?q={{ q|urlencode }}&sort=created_at&order={% if sort == 'created_at' %}{{ next_order }}{% else %}desc{% endif %}">
-              Added
-              {% if sort == 'created_at' %}{% if order == 'asc' %}▲{% else %}▼{% endif %}{% endif %}
-            </a>
-          </th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for contact in contacts %}
-        <tr>
-          <td class="fw-semibold">{{ contact.last_name }}</td>
-          <td>{{ contact.first_name }}</td>
-          <td><i class="bi bi-geo-alt text-muted"></i> {{ contact.city }}</td>
-          <td>
-            <span class="badge text-bg-secondary">{{ contact.status.name }}</span>
-          </td>
-          <td>
-            <span class="weather-slot text-muted small" data-city="{{ contact.city }}">—</span>
-          </td>
-          <td class="text-muted small">{{ contact.created_at|date:"Y-m-d H:i" }}</td>
-          <td class="text-nowrap">
-            <a href="{% url 'contacts:edit' contact.pk %}" class="btn btn-outline-primary btn-sm">
-              <i class="bi bi-pencil"></i>
-            </a>
-            <a href="{% url 'contacts:delete' contact.pk %}" class="btn btn-outline-danger btn-sm">
-              <i class="bi bi-trash"></i>
-            </a>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="7" class="text-center text-muted py-4">
-            No contacts found. Adjust search or add a new contact.
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<div class="row g-3">
+  <div class="col-12 col-lg-7">
+    <div class="d-flex flex-column gap-2">
+      {% for contact in contacts %}
+      <div class="card contact-row" data-id="{{ contact.pk }}" role="button" tabindex="0">
+        <div class="card-body d-flex align-items-center gap-3 py-2">
+          <span class="avatar" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+          </span>
+          <div class="flex-grow-1">
+            <div class="contact-name">{{ contact.first_name }} {{ contact.last_name }}</div>
+            <div class="contact-meta">
+              <i data-lucide="map-pin"></i> {{ contact.city }}
+              &middot; <span class="weather-slot" data-city="{{ contact.city }}">—</span>
+            </div>
+          </div>
+          <div class="status-col">
+            <span class="status-badge status-{{ contact.status.name|slugify }}">{{ contact.status.name }}</span>
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="card">
+        <div class="card-body text-center text-muted py-4">
+          No contacts found. Adjust search or add a new contact.
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-3">
+      <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?q={{ q|urlencode }}&sort={{ sort }}&order={{ order }}&page={{ page_obj.previous_page_number }}"><i data-lucide="chevron-left"></i>Previous</a>
+        </li>
+        {% endif %}
+        <li class="page-item disabled">
+          <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        </li>
+        {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?q={{ q|urlencode }}&sort={{ sort }}&order={{ order }}&page={{ page_obj.next_page_number }}">Next<i data-lucide="chevron-right"></i></a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+    {% endif %}
+  </div>
+
+  <div class="col-12 col-lg-5">
+    <div class="card detail-card position-sticky" style="top: 1rem;">
+      <div class="card-body" id="contact-detail">
+        <div class="text-center text-muted py-5 detail-placeholder">
+          <i data-lucide="user" style="width:2rem;height:2rem;"></i>
+          <p class="mt-2 mb-0">Select a contact to see details.</p>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-{% if page_obj.has_other_pages %}
-<nav class="mt-3">
-  <ul class="pagination justify-content-center">
-    {% if page_obj.has_previous %}
-    <li class="page-item">
-      <a class="page-link" href="?q={{ q|urlencode }}&sort={{ sort }}&order={{ order }}&page={{ page_obj.previous_page_number }}">Previous</a>
-    </li>
-    {% endif %}
-    <li class="page-item disabled">
-      <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-    </li>
-    {% if page_obj.has_next %}
-    <li class="page-item">
-      <a class="page-link" href="?q={{ q|urlencode }}&sort={{ sort }}&order={{ order }}&page={{ page_obj.next_page_number }}">Next</a>
-    </li>
-    {% endif %}
-  </ul>
-</nav>
-{% endif %}
+<div class="modal fade modal-scale" id="contact-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="h5 modal-title fw-semibold" id="contact-modal-title">Add contact</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" action="{% url 'contacts:add' %}" id="contact-form" novalidate>
+        <div class="modal-body">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="id_first_name">First name</label>
+              <input type="text" name="first_name" id="id_first_name" class="form-control" required>
+              <div class="invalid-feedback" data-error-for="id_first_name"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="id_last_name">Last name</label>
+              <input type="text" name="last_name" id="id_last_name" class="form-control" required>
+              <div class="invalid-feedback" data-error-for="id_last_name"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="id_phone">Phone</label>
+              <input type="text" name="phone" id="id_phone" class="form-control" placeholder="+48 123 456 789" required>
+              <div class="invalid-feedback" data-error-for="id_phone"></div>
+              <div class="form-text">Polish number: 9 digits, optional +48.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="id_email">Email</label>
+              <input type="email" name="email" id="id_email" class="form-control" required>
+              <div class="invalid-feedback" data-error-for="id_email"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="id_city">City</label>
+              <input type="text" name="city" id="id_city" class="form-control" required>
+              <div class="invalid-feedback" data-error-for="id_city"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="id_status">Status</label>
+              <select name="status" id="id_status" class="form-select">
+                {% for s in statuses %}
+                <option value="{{ s.id }}">{{ s.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <div class="form-check">
+                <input type="checkbox" name="is_shared" id="id_is_shared" class="form-check-input">
+                <label class="form-check-label" for="id_is_shared">Shared contact</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i data-lucide="check"></i>Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade modal-scale" id="delete-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content border-danger">
+      <div class="modal-header">
+        <h2 class="h5 modal-title fw-semibold"><i data-lucide="trash-2"></i> Delete contact</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" id="delete-form" action="">
+        <div class="modal-body">
+          {% csrf_token %}
+          <p class="mb-0">Are you sure you want to delete
+            <strong id="delete-name"></strong>?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger">Yes, delete</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
-{% load static %}
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="{% static 'contacts/js/validation.js' %}"></script>
 <script src="{% static 'contacts/js/weather.js' %}"></script>
+<script src="{% static 'contacts/js/contact_ui.js' %}"></script>
+<script>if (window.lucide) lucide.createIcons();</script>
 {% endblock %}
