@@ -29,7 +29,12 @@ class ContactStatus(models.Model):
         verbose_name_plural = 'contact statuses'
 
     def __str__(self) -> str:
-        return self.name
+        return self.display_name
+
+    @property
+    def display_name(self) -> str:
+        """Human-readable label, e.g. 'in_progress' becomes 'In progress'."""
+        return self.name.replace('_', ' ').capitalize()
 
 
 class Contact(models.Model):

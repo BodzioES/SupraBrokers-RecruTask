@@ -45,6 +45,12 @@
       : 'status-unknown';
   }
 
+  // Mirror of ContactStatus.display_name: 'in_progress' becomes 'In progress'.
+  function displayName(name) {
+    const text = String(name || '').replace(/_/g, ' ');
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
   function renderDetail(data) {
     const added = (data.created_at || '').slice(0, 16).replace('T', ' ');
     detail.innerHTML = `
@@ -52,7 +58,7 @@
         ${avatarLg()}
         <div>
           <h2 class="h5 mb-1 fw-semibold">${esc(data.first_name)} ${esc(data.last_name)}</h2>
-          <span class="status-badge ${statusClass(data.status_name)}">${esc(data.status_name || '')}</span>
+          <span class="status-badge ${statusClass(data.status_name)}">${esc(displayName(data.status_name))}</span>
         </div>
       </div>
       <div class="mb-3">

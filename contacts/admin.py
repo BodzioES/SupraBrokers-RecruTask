@@ -5,7 +5,7 @@ from .models import Contact, ContactStatus
 
 @admin.register(ContactStatus)
 class ContactStatusAdmin(admin.ModelAdmin):
-    list_display = ('name',)
+    list_display = ('display_name', 'name')
     search_fields = ('name',)
 
 

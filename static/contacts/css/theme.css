@@ -138,13 +138,13 @@ body {
 }
 
 .status-new {
-  background-color: #e6f6ec;
-  color: #2e7d4f;
+  background-color: #e9f0fd;
+  color: #2f5aa8;
 }
 
 .status-in_progress {
-  background-color: #ececf0;
-  color: #5b5f6a;
+  background-color: #fdf3d7;
+  color: #8a6d00;
 }
 
 .status-lost {
@@ -153,8 +153,8 @@ body {
 }
 
 .status-outdated {
-  background-color: #fdf3d7;
-  color: #8a6d00;
+  background-color: #ececf0;
+  color: #5b5f6a;
 }
 
 .status-unknown {
@@ -163,13 +163,13 @@ body {
 }
 
 [data-bs-theme="dark"] .status-new {
-  background-color: rgba(70, 200, 130, 0.16);
-  color: #8fe3ae;
+  background-color: rgba(96, 140, 255, 0.16);
+  color: #9db8ff;
 }
 
 [data-bs-theme="dark"] .status-in_progress {
-  background-color: rgba(160, 165, 180, 0.16);
-  color: #c3c7d1;
+  background-color: rgba(255, 205, 70, 0.16);
+  color: #ffdf85;
 }
 
 [data-bs-theme="dark"] .status-lost {
@@ -178,8 +178,8 @@ body {
 }
 
 [data-bs-theme="dark"] .status-outdated {
-  background-color: rgba(255, 205, 70, 0.16);
-  color: #ffdf85;
+  background-color: rgba(160, 165, 180, 0.16);
+  color: #c3c7d1;
 }
 
 /* ---------- Controls ---------- */
