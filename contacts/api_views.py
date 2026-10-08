@@ -2,7 +2,6 @@ from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 
-from .models import Contact
 from .serializers import ContactListSerializer, ContactSerializer
 from .views import visible_contacts
 
