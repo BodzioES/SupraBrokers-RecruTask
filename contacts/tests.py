@@ -47,6 +47,28 @@ class ContactApiTest(APITestCase):
         self.status = make_status()
         self.contact = make_contact(status=self.status, owner=self.user)
 
+    def test_list_returns_plain_array(self):
+        response = self.client.get('/api/contacts/')
+        self.assertEqual(response.status_code, http_status.HTTP_200_OK)
+        self.assertIsInstance(response.data, list)
+        item = response.data[0]
+        for field in ('id', 'first_name', 'last_name', 'city', 'status', 'created_at'):
+            self.assertIn(field, item)
+        self.assertNotIn('phone', item)
+        self.assertNotIn('email', item)
+
+    def test_list_paginates_only_on_demand(self):
+        response = self.client.get('/api/contacts/', {'page': 1})
+        self.assertIn('results', response.data)
+        response = self.client.get('/api/contacts/', {'page_size': 1})
+        self.assertEqual(len(response.data['results']), 1)
+
+    def test_detail_has_full_fields(self):
+        response = self.client.get(f'/api/contacts/{self.contact.id}/')
+        self.assertEqual(response.status_code, http_status.HTTP_200_OK)
+        self.assertIn('phone', response.data)
+        self.assertIn('email', response.data)
+
     def test_create_update_delete(self):
         create_url = '/api/contacts/'
         payload = {
@@ -69,6 +91,59 @@ class ContactApiTest(APITestCase):
 
         deleted = self.client.delete(detail_url)
         self.assertEqual(deleted.status_code, http_status.HTTP_204_NO_CONTENT)
+
+    def test_create_with_status_name(self):
+        payload = {
+            'first_name': 'Ewa',
+            'last_name': 'Kowal',
+            'phone': '555666777',
+            'email': 'ewa@example.com',
+            'city': 'Poznan',
+            'status': 'new',
+        }
+        response = self.client.post('/api/contacts/', payload, format='json')
+        self.assertEqual(response.status_code, http_status.HTTP_201_CREATED)
+        self.assertEqual(response.data['status'], self.status.id)
+
+    def test_create_unknown_status_returns_400(self):
+        payload = {
+            'first_name': 'Ewa',
+            'last_name': 'Kowal',
+            'phone': '555666777',
+            'email': 'ewa@example.com',
+            'city': 'Poznan',
+            'status': 'no-such-status',
+        }
+        response = self.client.post('/api/contacts/', payload, format='json')
+        self.assertEqual(response.status_code, http_status.HTTP_400_BAD_REQUEST)
+        self.assertIn('status', response.data)
+
+    def test_create_duplicate_phone_returns_400(self):
+        payload = {
+            'first_name': 'Ewa',
+            'last_name': 'Kowal',
+            'phone': self.contact.phone,
+            'email': 'ewa@example.com',
+            'city': 'Poznan',
+            'status': self.status.id,
+        }
+        response = self.client.post('/api/contacts/', payload, format='json')
+        self.assertEqual(response.status_code, http_status.HTTP_400_BAD_REQUEST)
+        self.assertIn('phone', response.data)
+
+    def test_other_users_contact_returns_404(self):
+        other = User.objects.create_user('other', password='pass')
+        hidden = make_contact(
+            phone='333333333', email='other@example.com',
+            status=self.status, owner=other,
+        )
+        detail_url = f'/api/contacts/{hidden.id}/'
+        self.assertEqual(self.client.get(detail_url).status_code, 404)
+        self.assertEqual(
+            self.client.put(detail_url, {'city': 'X'}, format='json').status_code,
+            404,
+        )
+        self.assertEqual(self.client.delete(detail_url).status_code, 404)
 
 
 class CsvImportTest(TestCase):
