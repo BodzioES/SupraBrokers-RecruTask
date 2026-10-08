@@ -1,8 +1,10 @@
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from .models import Contact, ContactStatus, normalize_phone, validate_pl_phone
 
 
+@extend_schema_field({'oneOf': [{'type': 'integer'}, {'type': 'string'}]})
 class StatusIdOrNameField(serializers.Field):
     """Accept a status id (e.g. 1) or a status name (e.g. "new")."""
 

@@ -125,8 +125,8 @@
       <div class="col-6 col-md-3">
         <div class="fw-semibold small mb-2">Developer</div>
         <ul class="list-unstyled small mb-0">
-          <li><a class="footer-link" href="https://github.com/BodzioES/SupraBrokers-RecruTask">GitHub repository</a></li>
-          <li><a class="footer-link" href="/api/contacts/">API docs</a></li>
+          {% if GITHUB_REPO_URL %}<li><a class="footer-link" href="{{ GITHUB_REPO_URL }}">GitHub repository</a></li>{% else %}<li class="text-muted">GitHub repository (set GITHUB_REPO_URL)</li>{% endif %}
+          <li><a class="footer-link" href="/api/docs/">API docs</a></li>
           <li><a class="footer-link" href="/admin/">Admin panel</a></li>
         </ul>
       </div>

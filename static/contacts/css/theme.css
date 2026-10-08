@@ -152,6 +152,10 @@ body {
   outline-offset: 2px;
 }
 
+.detail-row {
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 575px) {
   .contact-row .flex-grow-1 {
     min-width: 0;

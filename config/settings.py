@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.postgres',
     'rest_framework',
+    'drf_spectacular',
     'contacts',
 ]
 
@@ -72,6 +73,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'contacts.context_processors.github_repo',
             ],
         },
     },
@@ -136,6 +138,12 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'SupraBrokers Contacts API',
+    'VERSION': '1.0.0',
 }
 
 if os.getenv('REDIS_URL'):
@@ -168,6 +176,9 @@ WEATHER_CACHE_TIMEOUT = 45 * 60  # current weather freshness
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'contacts:list'
 LOGOUT_REDIRECT_URL = 'login'
+
+# Public repository URL shown in the footer; empty means a placeholder.
+GITHUB_REPO_URL = os.getenv('GITHUB_REPO_URL', '')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
