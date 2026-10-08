@@ -78,7 +78,13 @@
       {% empty %}
       <div class="card">
         <div class="card-body text-center text-muted py-4">
-          <p class="mb-0">No contacts found. Adjust search or add a new contact.</p>
+          {% if q %}
+          <p class="mb-2">No contacts found for "{{ q }}".</p>
+          <a href="{% url 'contacts:list' %}" class="btn btn-outline-secondary btn-sm">Clear search</a>
+          {% else %}
+          <p class="mb-2">No contacts yet.</p>
+          <button class="btn btn-primary btn-sm" data-add-empty>Add your first contact</button>
+          {% endif %}
         </div>
       </div>
       {% endfor %}

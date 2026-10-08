@@ -159,6 +159,9 @@
   if (addButton) {
     addButton.addEventListener('click', () => openModal('add'));
   }
+  document.querySelectorAll('[data-add-empty]').forEach((button) => {
+    button.addEventListener('click', () => openModal('add'));
+  });
 
   // Autofocus the first field every time the modal opens.
   modalEl.addEventListener('shown.bs.modal', () => {
