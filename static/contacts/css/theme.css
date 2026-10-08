@@ -94,16 +94,9 @@ body {
 }
 
 @media (max-width: 991px) {
-  .user-cluster {
-    flex-direction: row;
-    align-items: center;
-    gap: 0.5rem;
-    padding-top: 0.5rem;
-    border-top: 1px solid var(--bs-border-color);
-  }
-
-  .user-cluster .user-chip {
-    margin-right: auto;
+  /* The logged-in cluster lives in the navbar header on mobile. */
+  ul.user-cluster:has(.user-chip) {
+    display: none;
   }
 }
 
@@ -120,12 +113,11 @@ body {
   border-color: #dc3545;
 }
 
-.btn-delete-solid {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 31px;
-  height: 31px;
+.btn-trash {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
   padding: 0;
   color: #fff;
   background-color: #dc3545;
@@ -134,18 +126,15 @@ body {
   line-height: 1;
 }
 
-.btn-delete-solid:hover {
+.btn-trash:hover {
   color: #dc3545;
   background-color: #fff;
   border-color: #dc3545;
 }
 
-.btn-delete-solid .lucide,
-.btn-delete-solid svg {
+.btn-trash svg {
   width: 1rem;
   height: 1rem;
-  margin: 0;
-  vertical-align: middle;
 }
 
 /* ---------- Header ---------- */
@@ -198,13 +187,6 @@ body {
   overflow-wrap: anywhere;
 }
 
-.detail-close {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  z-index: 2;
-}
-
 .detail-card {
   position: relative;
 }
@@ -212,42 +194,6 @@ body {
 @media (min-width: 992px) {
   .detail-card {
     top: 1rem;
-  }
-}
-
-#detail-backdrop {
-  display: none;
-}
-
-@media (max-width: 991px) {
-  body.drawer-open {
-    overflow: hidden;
-  }
-
-  #detail-column .detail-card {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: min(92vw, 420px);
-    z-index: 1060;
-    border-radius: 0;
-    transform: translateX(105%);
-    transition: transform 0.25s ease-out;
-    overflow-y: auto;
-  }
-
-  #detail-column.open .detail-card {
-    transform: translateX(0);
-  }
-
-  #detail-backdrop.visible {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 1050;
-    background-color: rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(2px);
   }
 }
 

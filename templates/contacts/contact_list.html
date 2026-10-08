@@ -121,17 +121,25 @@
     {% endif %}
   </div>
 
-  <div class="col-12 col-lg-5" id="detail-column">
-    <div class="card detail-card position-sticky">
-      <button type="button" class="btn-close detail-close d-lg-none" aria-label="Close details"></button>
-      <div class="card-body" id="contact-detail">
-        <div class="text-center text-muted py-5 detail-placeholder">
-          <i data-lucide="user" style="width:2rem;height:2rem;"></i>
-          <p class="mt-2 mb-0">Select a contact to see details.</p>
+  <div class="col-12 col-lg-5">
+    <div class="offcanvas-lg offcanvas-end" tabindex="-1" id="detail-offcanvas"
+         aria-labelledby="detail-offcanvas-title">
+      <div class="offcanvas-header d-lg-none">
+        <h2 class="h5 mb-0 fw-semibold" id="detail-offcanvas-title">Details</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"
+                aria-label="Close details"></button>
+      </div>
+      <div class="offcanvas-body p-0 p-lg-0">
+        <div class="card detail-card position-sticky" id="detail-card">
+          <div class="card-body" id="contact-detail">
+            <div class="text-center text-muted py-5 detail-placeholder">
+              <i data-lucide="user" style="width:2rem;height:2rem;"></i>
+              <p class="mt-2 mb-0">Select a contact to see details.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <div id="detail-backdrop"></div>
   </div>
 </div>
 
@@ -227,8 +235,8 @@
 
 {% block extra_js %}
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-<script src="{% static 'contacts/js/validation.js' %}"></script>
-<script src="{% static 'contacts/js/weather.js' %}"></script>
-<script src="{% static 'contacts/js/contact_ui.js' %}"></script>
+<script src="{% static 'contacts/js/validation.js' %}?v=5"></script>
+<script src="{% static 'contacts/js/weather.js' %}?v=5"></script>
+<script src="{% static 'contacts/js/contact_ui.js' %}?v=5"></script>
 <script>if (window.lucide) lucide.createIcons();</script>
 {% endblock %}

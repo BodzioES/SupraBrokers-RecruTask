@@ -82,7 +82,7 @@
         <button class="btn btn-primary btn-sm" data-action="edit" data-id="${data.id}">
           <i data-lucide="pencil"></i>Edit
         </button>
-        <button class="btn btn-delete-solid btn-sm" data-action="delete" data-id="${data.id}" title="Delete" aria-label="Delete">
+        <button class="btn-trash" data-action="delete" data-id="${data.id}" title="Delete" aria-label="Delete">
           <i data-lucide="trash-2"></i>
         </button>
       </div>`;
@@ -90,37 +90,21 @@
     if (window.refreshWeather) window.refreshWeather(detail);
   }
 
-  const detailColumn = document.getElementById('detail-column');
-  const detailBackdrop = document.getElementById('detail-backdrop');
-  const detailClose = document.querySelector('.detail-close');
+  const offcanvasEl = document.getElementById('detail-offcanvas');
   const isMobile = () => window.matchMedia('(max-width: 991px)').matches;
 
-  function closeDrawer() {
-    if (detailColumn) detailColumn.classList.remove('open');
-    if (detailBackdrop) detailBackdrop.classList.remove('visible');
-    document.body.classList.remove('drawer-open');
+  // On mobile the detail panel opens as a Bootstrap offcanvas drawer
+  // (backdrop, Escape and close button handled by the framework).
+  function revealDetail() {
+    if (!isMobile() || !offcanvasEl || !window.bootstrap) return;
+    bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl).show();
   }
-
-  if (detailBackdrop) {
-    detailBackdrop.addEventListener('click', closeDrawer);
-  }
-  if (detailClose) {
-    detailClose.addEventListener('click', closeDrawer);
-  }
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') closeDrawer();
-  });
 
   async function showDetail(id, row) {
     if (activeRow) activeRow.classList.remove('active');
     activeRow = row || null;
     if (activeRow) activeRow.classList.add('active');
-    // On mobile the detail panel slides in as a drawer.
-    if (isMobile() && detailColumn) {
-      detailColumn.classList.add('open');
-      if (detailBackdrop) detailBackdrop.classList.add('visible');
-      document.body.classList.add('drawer-open');
-    }
+    revealDetail();
     // Details already fetched once are reused, no second API call.
     if (cache.has(id)) {
       renderDetail(cache.get(id));
