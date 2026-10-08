@@ -135,3 +135,21 @@ class UnaccentSearchTest(TestCase):
         )
         results = filter_contacts({'q': 'Krakow'}, user)
         self.assertIn(contact, list(results))
+
+
+class SeedIdempotencyTest(TestCase):
+    """Re-running the seed tops up unique people without duplicates."""
+
+    def run_seed(self, count):
+        from django.core.management import call_command
+
+        call_command('seed_contacts', count=count)
+
+    def test_rerun_does_not_duplicate_people(self):
+        self.run_seed(10)
+        self.run_seed(10)
+        people = list(
+            Contact.objects.values_list('first_name', 'last_name')
+        )
+        self.assertEqual(len(people), len(set(people)))
+        self.assertLessEqual(len(people), 20)
