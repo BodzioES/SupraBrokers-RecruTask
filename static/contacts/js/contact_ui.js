@@ -73,8 +73,8 @@
         <div class="detail-row"><i data-lucide="mail"></i>
           <a href="mailto:${esc(data.email)}">${esc(data.email)}</a></div>
         <div class="detail-row"><i data-lucide="map-pin"></i> ${esc(data.city)}</div>
-        <div class="detail-row"><i data-lucide="cloud-sun"></i>
-          <span class="weather-slot text-muted small" data-city="${esc(data.city)}">…</span></div>
+        <div class="detail-row">
+          <span class="weather-slot" data-city="${esc(data.city)}">…</span></div>
         <div class="detail-row text-muted small"><i data-lucide="calendar"></i> Added: ${esc(added)}</div>
       </div>
       <div class="d-flex flex-wrap gap-2">

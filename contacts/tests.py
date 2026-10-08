@@ -212,6 +212,38 @@ class UnaccentSearchTest(TestCase):
         self.assertIn(contact, list(results))
 
 
+class WeatherServiceTest(TestCase):
+    """Weather lookup with mocked HTTP; second call uses the cache."""
+
+    def setUp(self):
+        from django.core.cache import cache
+
+        cache.clear()
+
+    def test_second_call_does_not_hit_network(self):
+        from unittest import mock
+
+        from .services import weather as weather_module
+
+        geo = [{'lat': '52.23', 'lon': '21.01'}]
+        meteo = {
+            'current': {
+                'temperature_2m': 16.5,
+                'relative_humidity_2m': 63,
+                'wind_speed_10m': 2.9,
+                'weather_code': 2,
+            }
+        }
+        with mock.patch.object(
+            weather_module, '_fetch_json', side_effect=[geo, meteo]
+        ) as fetch:
+            first = weather_module.get_city_weather('Warszawa')
+            second = weather_module.get_city_weather('Warszawa')
+        self.assertEqual(fetch.call_count, 2)
+        self.assertEqual(first, second)
+        self.assertEqual(first['weather_code'], 2)
+
+
 class SeedIdempotencyTest(TestCase):
     """Re-running the seed tops up unique people without duplicates."""
 

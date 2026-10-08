@@ -1,7 +1,26 @@
 // Lazy weather loading: one request per distinct city.
-// Backend caches coordinates (24h) and weather (45 min).
+// Backend caches coordinates (30 days) and weather (45 min).
 (function () {
   const loaded = new Map();
+
+  // WMO weather code -> [lucide icon, short description].
+  function condition(code) {
+    if (code === 0 || code === 1) return ['sun', 'Clear sky'];
+    if (code === 2) return ['cloud-sun', 'Partly cloudy'];
+    if (code === 3) return ['cloud', 'Overcast'];
+    if (code === 45 || code === 48) return ['cloud-fog', 'Fog'];
+    if (code >= 51 && code <= 57) return ['cloud-drizzle', 'Drizzle'];
+    if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) {
+      return ['cloud-rain', 'Rain'];
+    }
+    if ([71, 73, 75, 77, 85, 86].includes(code)) {
+      return ['cloud-snow', 'Snow'];
+    }
+    if (code !== null && code !== undefined && code >= 95) {
+      return ['cloud-lightning', 'Thunderstorm'];
+    }
+    return ['cloud-sun', 'Weather'];
+  }
 
   function metricsText(data) {
     const parts = [];
@@ -12,12 +31,17 @@
   }
 
   function fillSlot(slot, data) {
-    slot.textContent = metricsText(data);
+    const [icon, label] = condition(data.weather_code);
+    slot.innerHTML =
+      `<span title="${label}"><i data-lucide="${icon}"></i></span> ` +
+      `<span>${metricsText(data)}</span>`;
     slot.classList.remove('text-muted');
+    if (window.lucide) window.lucide.createIcons();
   }
 
   function failSlot(slot) {
-    slot.textContent = 'n/a';
+    slot.innerHTML =
+      '<span class="text-muted" title="Weather unavailable">no data</span>';
   }
 
   // Scan root for new weather slots. Already-loaded cities fill instantly.
@@ -37,7 +61,7 @@
         else failSlot(slot);
         return;
       }
-      slot.textContent = '…';
+      slot.innerHTML = '<span class="weather-skeleton" aria-hidden="true"></span>';
       if (!fresh.has(city)) fresh.set(city, []);
       fresh.get(city).push(slot);
     });

@@ -18,7 +18,7 @@ from django.views.generic import (
 from .forms import ContactForm, ContactImportForm
 from .models import Contact, ContactStatus
 from .services import import_contacts_from_csv
-from .weather import get_city_weather
+from .services.weather import get_city_weather
 
 ALLOWED_SORTS = ('last_name', 'created_at')
 

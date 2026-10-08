@@ -54,7 +54,10 @@ def get_weather(lat: float, lon: float) -> dict | None:
         {
             'latitude': lat,
             'longitude': lon,
-            'current': 'temperature_2m,relative_humidity_2m,wind_speed_10m',
+            'current': (
+                'temperature_2m,relative_humidity_2m,'
+                'wind_speed_10m,weather_code'
+            ),
             'timezone': 'auto',
         }
     )
@@ -66,6 +69,7 @@ def get_weather(lat: float, lon: float) -> dict | None:
         'temperature': current.get('temperature_2m'),
         'humidity': current.get('relative_humidity_2m'),
         'wind_speed': current.get('wind_speed_10m'),
+        'weather_code': current.get('weather_code'),
     }
     cache.set(key, result, settings.WEATHER_CACHE_TIMEOUT)
     return dict(result)

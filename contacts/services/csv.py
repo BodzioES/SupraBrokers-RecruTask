@@ -4,7 +4,7 @@ import io
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
-from .models import Contact, ContactStatus, normalize_phone
+from ..models import Contact, ContactStatus, normalize_phone
 
 REQUIRED_COLUMNS = {'first_name', 'last_name', 'phone', 'email', 'city', 'status'}
 
