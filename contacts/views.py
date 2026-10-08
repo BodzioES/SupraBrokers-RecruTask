@@ -85,7 +85,26 @@ class ContactListView(LoginRequiredMixin, ListView):
         context['order'] = order
         context['next_order'] = 'desc' if order == 'asc' else 'asc'
         context['statuses'] = ContactStatus.objects.all()
+        context['page_links'] = page_window(context['page_obj'])
         return context
+
+
+def page_window(page_obj):
+    """Page numbers with None as ellipsis, e.g. [1, 2, 3, 4, None, 10]."""
+    total = page_obj.paginator.num_pages
+    current = page_obj.number
+    if total <= 7:
+        return list(range(1, total + 1))
+    wanted = {1, 2, total - 1, total, current - 1, current, current + 1}
+    pages = sorted(p for p in wanted if 1 <= p <= total)
+    links = []
+    previous = 0
+    for number in pages:
+        if number - previous > 1:
+            links.append(None)
+        links.append(number)
+        previous = number
+    return links
 
 
 class ContactCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
@@ -117,10 +136,21 @@ class ContactUpdateView(
     success_message = 'Contact %(first_name)s %(last_name)s was updated.'
 
 
-class ContactDeleteView(LoginRequiredMixin, OwnedContactMixin, DeleteView):
+class ContactDeleteView(
+    LoginRequiredMixin, OwnedContactMixin, SuccessMessageMixin, DeleteView
+):
     model = Contact
     template_name = 'contacts/contact_confirm_delete.html'
     success_url = reverse_lazy('contacts:list')
+    # Modern DeleteView deletes through form_valid(), so this mixin works.
+    # The default mixin formats with the (empty) form data, hence the override.
+    success_message = 'Contact %(first_name)s %(last_name)s was deleted.'
+
+    def get_success_message(self, cleaned_data):
+        return self.success_message % {
+            'first_name': self.object.first_name,
+            'last_name': self.object.last_name,
+        }
 
 
 class ContactImportView(LoginRequiredMixin, FormView):

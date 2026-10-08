@@ -17,6 +17,20 @@ def find_status(value):
     return ContactStatus.objects.filter(name__iexact=name).first()
 
 
+def format_error(exc):
+    """Human-readable reason: 'email: Enter a valid email address'."""
+    if isinstance(exc, ValidationError) and hasattr(exc, 'message_dict'):
+        parts = [
+            f'{field}: {", ".join(messages)}'
+            for field, messages in exc.message_dict.items()
+        ]
+        text = '; '.join(parts)
+    else:
+        text = str(exc)
+    text = text.strip().rstrip('.')
+    return text or 'Invalid row'
+
+
 def import_contacts_from_csv(uploaded_file, owner=None):
     """Parse CSV and create contacts.
 
@@ -45,15 +59,15 @@ def import_contacts_from_csv(uploaded_file, owner=None):
             city = (row.get('city') or '').strip()
             status_name = (row.get('status') or '').strip()
             if not all([first_name, last_name, phone, email, city, status_name]):
-                reason = 'Missing required value.'
+                reason = 'Missing required value'
             elif Contact.objects.filter(phone=phone).exists():
-                reason = 'Duplicate phone number.'
+                reason = 'Duplicate phone number'
             elif Contact.objects.filter(email__iexact=email).exists():
-                reason = 'Duplicate email address.'
+                reason = 'Duplicate email address'
             else:
                 status = find_status(status_name)
                 if status is None:
-                    reason = f'Unknown status: {status_name}.'
+                    reason = f'Unknown status: {status_name}'
                 else:
                     contact = Contact(
                         first_name=first_name,
@@ -68,7 +82,7 @@ def import_contacts_from_csv(uploaded_file, owner=None):
                     contact.save()
                     added += 1
         except (ValidationError, IntegrityError, ValueError) as exc:
-            reason = str(exc) if str(exc) else 'Invalid row.'
+            reason = format_error(exc)
         if reason is not None:
             skipped_rows.append((line_number, reason))
     duplicates = sum(1 for _, r in skipped_rows if r.startswith('Duplicate'))

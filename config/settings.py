@@ -73,7 +73,6 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'contacts.context_processors.github_repo',
             ],
         },
     },
@@ -136,6 +135,10 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 REST_FRAMEWORK = {
+    # JSON only: the task requires plain API endpoints, no browser forms.
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
@@ -176,9 +179,6 @@ WEATHER_CACHE_TIMEOUT = 45 * 60  # current weather freshness
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'contacts:list'
 LOGOUT_REDIRECT_URL = 'login'
-
-# Public repository URL shown in the footer; empty means a placeholder.
-GITHUB_REPO_URL = os.getenv('GITHUB_REPO_URL', '')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field

@@ -61,6 +61,7 @@ class ContactSerializer(serializers.ModelSerializer):
             'city',
             'status',
             'status_name',
+            'is_shared',
             'created_at',
         ]
         read_only_fields = ['id', 'created_at', 'status_name']

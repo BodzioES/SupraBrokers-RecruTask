@@ -92,15 +92,25 @@
 
     {% if page_obj.has_other_pages %}
     <nav class="mt-3">
-      <ul class="pagination justify-content-center">
+      <ul class="pagination justify-content-center flex-wrap">
         {% if page_obj.has_previous %}
         <li class="page-item">
           <a class="page-link" href="?q={{ q|urlencode }}&sort={{ sort }}&order={{ order }}&page={{ page_obj.previous_page_number }}"><i data-lucide="chevron-left"></i>Previous</a>
         </li>
         {% endif %}
-        <li class="page-item disabled">
-          <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% for number in page_links %}
+        {% if number %}
+        {% if number == page_obj.number %}
+        <li class="page-item active" aria-current="page"><span class="page-link">{{ number }}</span></li>
+        {% else %}
+        <li class="page-item">
+          <a class="page-link" href="?q={{ q|urlencode }}&sort={{ sort }}&order={{ order }}&page={{ number }}">{{ number }}</a>
         </li>
+        {% endif %}
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+        {% endif %}
+        {% endfor %}
         {% if page_obj.has_next %}
         <li class="page-item">
           <a class="page-link" href="?q={{ q|urlencode }}&sort={{ sort }}&order={{ order }}&page={{ page_obj.next_page_number }}">Next<i data-lucide="chevron-right"></i></a>
@@ -111,8 +121,9 @@
     {% endif %}
   </div>
 
-  <div class="col-12 col-lg-5">
-    <div class="card detail-card position-sticky" style="top: 1rem;">
+  <div class="col-12 col-lg-5" id="detail-column">
+    <div class="card detail-card position-sticky">
+      <button type="button" class="btn-close detail-close d-lg-none" aria-label="Close details"></button>
       <div class="card-body" id="contact-detail">
         <div class="text-center text-muted py-5 detail-placeholder">
           <i data-lucide="user" style="width:2rem;height:2rem;"></i>
@@ -120,6 +131,7 @@
         </div>
       </div>
     </div>
+    <div id="detail-backdrop"></div>
   </div>
 </div>
 

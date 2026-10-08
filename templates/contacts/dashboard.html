@@ -9,7 +9,7 @@
 </div>
 
 <div class="row g-3">
-  <div class="col-12 col-lg-8">
+  <div class="col-12">
     <div class="card shadow-sm">
       <div class="card-body">
         <h2 class="h5">Contacts per city</h2>
@@ -17,8 +17,8 @@
       </div>
     </div>
   </div>
-  <div class="col-12 col-lg-4">
-    <div class="card shadow-sm mb-3">
+  <div class="col-12 col-md-6">
+    <div class="card shadow-sm">
       <div class="card-body">
         <h2 class="h5">Breakdown</h2>
         <ul class="list-group list-group-flush">
@@ -33,7 +33,9 @@
         </ul>
       </div>
     </div>
-    <div class="card shadow-sm">
+  </div>
+  <div class="col-12 col-md-6">
+    <div class="card shadow-sm mb-4">
       <div class="card-body">
         <h2 class="h5">Contacts per status</h2>
         <canvas id="statusChart" height="140"></canvas>
@@ -50,8 +52,10 @@
 <script>
 (function () {
   if (typeof Chart === 'undefined') return;
-  // Theme-aware bar color with a fallback for no-JS-theme edge cases.
-  const accent = getComputedStyle(document.body).getPropertyValue('--bs-primary').trim() || '#0d6efd';
+  // Theme-aware colors with fallbacks for no-JS-theme edge cases.
+  const bodyStyle = getComputedStyle(document.body);
+  const accent = bodyStyle.getPropertyValue('--bs-primary').trim() || '#0d6efd';
+  const textColor = bodyStyle.getPropertyValue('--bs-body-color').trim() || '#666';
   const cityRaw = JSON.parse(document.getElementById('city-chart-data').textContent);
   const cityCtx = document.getElementById('cityChart');
   if (cityCtx) {
@@ -64,7 +68,10 @@
       options: {
         responsive: true,
         plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { precision: 0, stepSize: 1 } } }
+        scales: {
+          x: { ticks: { color: textColor } },
+          y: { beginAtZero: true, ticks: { precision: 0, stepSize: 1, color: textColor } }
+        }
       }
     });
   }
@@ -77,7 +84,10 @@
         labels: statusRaw.labels,
         datasets: [{ data: statusRaw.data, backgroundColor: statusRaw.colors }]
       },
-      options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'right', labels: { color: textColor } } }
+      }
     });
   }
 })();
