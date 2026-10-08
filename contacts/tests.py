@@ -159,9 +159,8 @@ class CsvImportTest(TestCase):
         uploaded = SimpleUploadedFile(
             'contacts.csv', csv_content.encode('utf-8'), content_type='text/csv'
         )
-        added, skipped, skipped_rows = import_contacts_from_csv(uploaded)
-        self.assertEqual(added, 1)
-        self.assertEqual(skipped, 1)
+        added, duplicates, invalid, skipped_rows = import_contacts_from_csv(uploaded)
+        self.assertEqual((added, duplicates, invalid), (1, 1, 0))
         self.assertEqual(len(skipped_rows), 1)
         self.assertIn('Duplicate', skipped_rows[0][1])
         self.assertTrue(Contact.objects.filter(email='ewa@example.com').exists())
@@ -176,11 +175,22 @@ class CsvImportTest(TestCase):
         uploaded = SimpleUploadedFile(
             'contacts.csv', csv_content.encode('utf-8'), content_type='text/csv'
         )
-        added, skipped, skipped_rows = import_contacts_from_csv(uploaded)
-        self.assertEqual(added, 1)
-        self.assertEqual(skipped, 2)
+        added, duplicates, invalid, skipped_rows = import_contacts_from_csv(uploaded)
+        self.assertEqual((added, duplicates, invalid), (1, 1, 1))
         reasons = [reason for _, reason in skipped_rows]
         self.assertTrue(any('Duplicate' in reason for reason in reasons))
+
+    def test_import_skips_unknown_status(self):
+        csv_content = (
+            'first_name,last_name,phone,email,city,status\n'
+            'Ewa,Kowal,555666777,ewa@example.com,Poznan,no-such-status\n'
+        )
+        uploaded = SimpleUploadedFile(
+            'contacts.csv', csv_content.encode('utf-8'), content_type='text/csv'
+        )
+        added, duplicates, invalid, skipped_rows = import_contacts_from_csv(uploaded)
+        self.assertEqual((added, duplicates, invalid), (0, 0, 1))
+        self.assertIn('Unknown status', skipped_rows[0][1])
 
 
 class ContactIsolationTest(TestCase):

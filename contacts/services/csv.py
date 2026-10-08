@@ -9,11 +9,19 @@ from ..models import Contact, ContactStatus, normalize_phone
 REQUIRED_COLUMNS = {'first_name', 'last_name', 'phone', 'email', 'city', 'status'}
 
 
+def find_status(value):
+    """Match an existing status by name (case-insensitive), else None."""
+    name = (value or '').strip()
+    if not name:
+        return None
+    return ContactStatus.objects.filter(name__iexact=name).first()
+
+
 def import_contacts_from_csv(uploaded_file, owner=None):
     """Parse CSV and create contacts.
 
-    Returns (added, skipped, skipped_rows) where skipped_rows is a list of
-    (csv_row_number, reason) tuples for the import report.
+    Returns (added, duplicates, invalid, skipped_rows) where skipped_rows
+    is a list of (csv_row_number, reason) tuples for the import report.
     Encoding utf-8-sig (handles BOM from Excel).
     """
     text = io.TextIOWrapper(uploaded_file, encoding='utf-8-sig')
@@ -43,22 +51,26 @@ def import_contacts_from_csv(uploaded_file, owner=None):
             elif Contact.objects.filter(email__iexact=email).exists():
                 reason = 'Duplicate email address.'
             else:
-                # Unknown CSV statuses become new rows, so nothing is lost.
-                status, _ = ContactStatus.objects.get_or_create(name=status_name)
-                contact = Contact(
-                    first_name=first_name,
-                    last_name=last_name,
-                    phone=phone,
-                    email=email,
-                    city=city,
-                    status=status,
-                    owner=owner,
-                )
-                contact.full_clean()
-                contact.save()
-                added += 1
+                status = find_status(status_name)
+                if status is None:
+                    reason = f'Unknown status: {status_name}.'
+                else:
+                    contact = Contact(
+                        first_name=first_name,
+                        last_name=last_name,
+                        phone=phone,
+                        email=email,
+                        city=city,
+                        status=status,
+                        owner=owner,
+                    )
+                    contact.full_clean()
+                    contact.save()
+                    added += 1
         except (ValidationError, IntegrityError, ValueError) as exc:
             reason = str(exc) if str(exc) else 'Invalid row.'
         if reason is not None:
             skipped_rows.append((line_number, reason))
-    return added, len(skipped_rows), skipped_rows
+    duplicates = sum(1 for _, r in skipped_rows if r.startswith('Duplicate'))
+    invalid = len(skipped_rows) - duplicates
+    return added, duplicates, invalid, skipped_rows

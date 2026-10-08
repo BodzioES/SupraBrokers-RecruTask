@@ -132,14 +132,16 @@ class ContactImportView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         try:
-            added, skipped, skipped_rows = import_contacts_from_csv(
+            added, duplicates, invalid, skipped_rows = import_contacts_from_csv(
                 form.cleaned_data['file'], owner=self.request.user
             )
         except ValidationError as exc:
             form.add_error('file', exc)
             return self.form_invalid(form)
         messages.success(
-            self.request, f'Imported {added} contacts, skipped {skipped}.'
+            self.request,
+            f'Imported {added} contacts, '
+            f'{duplicates} duplicates, {invalid} invalid rows.',
         )
         # Cap the per-row warnings so one bad file cannot flood the page.
         for line_number, reason in skipped_rows[:20]:
@@ -154,6 +156,14 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
     template_name = 'contacts/dashboard.html'
 
+    # Doughnut slice colors matching the status badges in theme.css.
+    STATUS_CHART_COLORS = {
+        'new': '#2f5aa8',
+        'in_progress': '#8a6d00',
+        'lost': '#b3372f',
+        'outdated': '#5b5f6a',
+    }
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Subquery keeps the stats scoped to contacts the user may see.
@@ -164,12 +174,29 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             .annotate(total=Count('id'))
             .order_by('-total', 'city')
         )
+        status_stats = list(
+            Contact.objects.filter(id__in=visible_ids)
+            .values('status__name')
+            .annotate(total=Count('id'))
+            .order_by('-total')
+        )
         context['city_stats'] = stats
         context['total_contacts'] = visible_ids.count()
-        # Plain dict on purpose: the template serializes it with json_script.
+        # Plain dicts on purpose: the template serializes them with json_script.
         context['chart_data'] = {
             'labels': [s['city'] for s in stats],
             'data': [s['total'] for s in stats],
+        }
+        context['status_chart_data'] = {
+            'labels': [
+                s['status__name'].replace('_', ' ').capitalize()
+                for s in status_stats
+            ],
+            'data': [s['total'] for s in status_stats],
+            'colors': [
+                self.STATUS_CHART_COLORS.get(s['status__name'], '#5b5f6a')
+                for s in status_stats
+            ],
         }
         return context
 
