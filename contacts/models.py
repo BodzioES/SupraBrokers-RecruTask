@@ -61,6 +61,10 @@ class Contact(models.Model):
 
     class Meta:
         ordering = ['last_name', 'first_name']
+        indexes = [
+            models.Index(fields=['last_name']),
+            models.Index(fields=['created_at']),
+        ]
 
     def __str__(self) -> str:
         return f'{self.first_name} {self.last_name} ({self.city})'
@@ -70,6 +74,7 @@ class Contact(models.Model):
         """Uppercase initials, correct for Polish letters."""
         first = (self.first_name or '').strip()[:1].upper()
         last = (self.last_name or '').strip()[:1].upper()
+        # An empty f-string is falsy, hence the '?' fallback.
         return f'{first}{last}' or '?'
 
     @property

@@ -1,7 +1,7 @@
 // Light/dark theme toggle persisted in localStorage. Default: light.
 (function () {
   const KEY = 'sb-theme';
-  const button = document.getElementById('theme-toggle');
+  const buttons = document.querySelectorAll('.theme-toggle');
 
   function iconFor(theme) {
     return theme === 'dark'
@@ -14,10 +14,12 @@
   }
 
   function paint() {
-    if (button) button.innerHTML = iconFor(current());
+    buttons.forEach((button) => {
+      button.innerHTML = iconFor(current());
+    });
   }
 
-  if (button) {
+  buttons.forEach((button) => {
     button.addEventListener('click', () => {
       const next = current() === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-bs-theme', next);
@@ -26,6 +28,6 @@
       } catch (e) {}
       paint();
     });
-  }
+  });
   paint();
 })();

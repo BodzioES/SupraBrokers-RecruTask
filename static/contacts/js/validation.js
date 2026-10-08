@@ -14,6 +14,7 @@
   }
 
   function setState(input, valid, message) {
+    // Each input has a matching <div data-error-for="input-id"> in the template.
     const feedback = document.querySelector(`[data-error-for="${input.id}"]`);
     input.classList.remove('is-valid', 'is-invalid');
     input.classList.add(valid ? 'is-valid' : 'is-invalid');
@@ -69,17 +70,6 @@
       const input = form.querySelector(`[name="${name}"]`);
       if (input && !validateField(input)) valid = false;
     });
-    if (!valid) {
-      event.preventDefault();
-      return;
-    }
-    // Prevent double submit: disable the save button with a spinner.
-    const saveButton = form.querySelector('[data-save-button]');
-    if (saveButton && !saveButton.disabled) {
-      saveButton.disabled = true;
-      saveButton.innerHTML =
-        '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span> ' +
-        saveButton.textContent.trim();
-    }
+    if (!valid) event.preventDefault();
   });
 })();

@@ -1,5 +1,3 @@
-import json
-
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
@@ -20,7 +18,7 @@ from django.views.generic import (
 from .forms import ContactForm, ContactImportForm
 from .models import Contact, ContactStatus
 from .services import import_contacts_from_csv
-from .weather import get_city_weather
+from .services.weather import get_city_weather
 
 ALLOWED_SORTS = ('last_name', 'created_at')
 
@@ -34,7 +32,7 @@ def visible_contacts(user) -> object:
 
 
 def filter_contacts(params, user) -> object:
-    """Apply visibility plus search, status/city filters and sorting."""
+    """Apply visibility plus search and sorting."""
     qs = visible_contacts(user)
     query = params.get('q', '').strip()
     if query:
@@ -45,15 +43,6 @@ def filter_contacts(params, user) -> object:
                 | Q(city__unaccent__icontains=query)
                 | Q(phone__icontains=query)
             )
-    try:
-        status_id = int(params.get('status') or 0)
-    except (TypeError, ValueError):
-        status_id = 0
-    if status_id:
-        qs = qs.filter(status_id=status_id)
-    city = (params.get('city') or '').strip()
-    if city:
-        qs = qs.filter(city__iexact=city)
     sort = params.get('sort', 'last_name')
     if sort not in ALLOWED_SORTS:
         sort = 'last_name'
@@ -75,6 +64,8 @@ class ContactListView(LoginRequiredMixin, ListView):
     allowed_sorts = ALLOWED_SORTS
 
     def get_sort(self) -> tuple[str, str]:
+        # Only whitelisted values pass through, so raw GET params
+        # can never inject an arbitrary field into order_by().
         sort = self.request.GET.get('sort', 'last_name')
         if sort not in self.allowed_sorts:
             sort = 'last_name'
@@ -89,44 +80,34 @@ class ContactListView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         sort, order = self.get_sort()
-        params = self.request.GET
-        context['q'] = params.get('q', '')
+        context['q'] = self.request.GET.get('q', '')
         context['sort'] = sort
         context['order'] = order
         context['next_order'] = 'desc' if order == 'asc' else 'asc'
-        context['selected_status'] = params.get('status', '')
-        context['selected_city'] = params.get('city', '')
         context['statuses'] = ContactStatus.objects.all()
-        context['cities'] = list(
-            visible_contacts(self.request.user)
-            .order_by('city')
-            .values_list('city', flat=True)
-            .distinct()
-        )
-        context['total_count'] = visible_contacts(self.request.user).count()
-        context['is_filtered'] = bool(
-            params.get('q', '').strip()
-            or params.get('status', '')
-            or params.get('city', '')
-        )
+        context['page_links'] = page_window(context['page_obj'])
         return context
 
 
-class CityDatalistMixin:
-    """City suggestions for the datalist, scoped to visible contacts."""
+def page_window(page_obj):
+    """Page numbers with None as ellipsis, e.g. [1, 2, 3, 4, None, 10]."""
+    total = page_obj.paginator.num_pages
+    current = page_obj.number
+    if total <= 7:
+        return list(range(1, total + 1))
+    wanted = {1, 2, total - 1, total, current - 1, current, current + 1}
+    pages = sorted(p for p in wanted if 1 <= p <= total)
+    links = []
+    previous = 0
+    for number in pages:
+        if number - previous > 1:
+            links.append(None)
+        links.append(number)
+        previous = number
+    return links
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['cities'] = list(
-            visible_contacts(self.request.user)
-            .order_by('city')
-            .values_list('city', flat=True)
-            .distinct()
-        )
-        return context
 
-
-class ContactCreateView(LoginRequiredMixin, CityDatalistMixin, SuccessMessageMixin, CreateView):
+class ContactCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Contact
     form_class = ContactForm
     template_name = 'contacts/contact_form.html'
@@ -146,11 +127,7 @@ class OwnedContactMixin:
 
 
 class ContactUpdateView(
-    LoginRequiredMixin,
-    OwnedContactMixin,
-    CityDatalistMixin,
-    SuccessMessageMixin,
-    UpdateView,
+    LoginRequiredMixin, OwnedContactMixin, SuccessMessageMixin, UpdateView
 ):
     model = Contact
     form_class = ContactForm
@@ -159,28 +136,44 @@ class ContactUpdateView(
     success_message = 'Contact %(first_name)s %(last_name)s was updated.'
 
 
-class ContactDeleteView(LoginRequiredMixin, OwnedContactMixin, DeleteView):
+class ContactDeleteView(
+    LoginRequiredMixin, OwnedContactMixin, SuccessMessageMixin, DeleteView
+):
     model = Contact
     template_name = 'contacts/contact_confirm_delete.html'
     success_url = reverse_lazy('contacts:list')
+    # Modern DeleteView deletes through form_valid(), so this mixin works.
+    # The default mixin formats with the (empty) form data, hence the override.
+    success_message = 'Contact %(first_name)s %(last_name)s was deleted.'
+
+    def get_success_message(self, cleaned_data):
+        return self.success_message % {
+            'first_name': self.object.first_name,
+            'last_name': self.object.last_name,
+        }
 
 
 class ContactImportView(LoginRequiredMixin, FormView):
+    """Upload a CSV file. Result is shown as toasts (counts + row reasons)."""
+
     form_class = ContactImportForm
     template_name = 'contacts/contact_import.html'
     success_url = reverse_lazy('contacts:list')
 
     def form_valid(self, form):
         try:
-            added, skipped, skipped_rows = import_contacts_from_csv(
+            added, duplicates, invalid, skipped_rows = import_contacts_from_csv(
                 form.cleaned_data['file'], owner=self.request.user
             )
         except ValidationError as exc:
             form.add_error('file', exc)
             return self.form_invalid(form)
         messages.success(
-            self.request, f'Imported {added} contacts, skipped {skipped}.'
+            self.request,
+            f'Imported {added} contacts, '
+            f'{duplicates} duplicates, {invalid} invalid rows.',
         )
+        # Cap the per-row warnings so one bad file cannot flood the page.
         for line_number, reason in skipped_rows[:20]:
             messages.warning(
                 self.request, f'Row {line_number} skipped: {reason}.'
@@ -193,8 +186,17 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 
     template_name = 'contacts/dashboard.html'
 
+    # Doughnut slice colors matching the status badges in theme.css.
+    STATUS_CHART_COLORS = {
+        'new': '#2f5aa8',
+        'in_progress': '#8a6d00',
+        'lost': '#b3372f',
+        'outdated': '#5b5f6a',
+    }
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        # Subquery keeps the stats scoped to contacts the user may see.
         visible_ids = visible_contacts(self.request.user).values('id')
         stats = list(
             Contact.objects.filter(id__in=visible_ids)
@@ -202,11 +204,30 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             .annotate(total=Count('id'))
             .order_by('-total', 'city')
         )
+        status_stats = list(
+            Contact.objects.filter(id__in=visible_ids)
+            .values('status__name')
+            .annotate(total=Count('id'))
+            .order_by('-total')
+        )
         context['city_stats'] = stats
         context['total_contacts'] = visible_ids.count()
-        context['chart_data'] = json.dumps(
-            {'labels': [s['city'] for s in stats], 'data': [s['total'] for s in stats]}
-        )
+        # Plain dicts on purpose: the template serializes them with json_script.
+        context['chart_data'] = {
+            'labels': [s['city'] for s in stats],
+            'data': [s['total'] for s in stats],
+        }
+        context['status_chart_data'] = {
+            'labels': [
+                s['status__name'].replace('_', ' ').capitalize()
+                for s in status_stats
+            ],
+            'data': [s['total'] for s in status_stats],
+            'colors': [
+                self.STATUS_CHART_COLORS.get(s['status__name'], '#5b5f6a')
+                for s in status_stats
+            ],
+        }
         return context
 
 
@@ -214,8 +235,6 @@ class WeatherView(LoginRequiredMixin, View):
     """JSON endpoint for one city. Used by weather.js after page load."""
 
     def get(self, request):
-        import time
-
         city = request.GET.get('city', '').strip()
         if not city:
             return JsonResponse({'error': 'Missing city.'}, status=400)
@@ -227,15 +246,7 @@ class WeatherView(LoginRequiredMixin, View):
             )
         if weather is None:
             return JsonResponse({'error': 'City not found.'}, status=404)
-        fetched_at = weather.pop('fetched_at', None)
-        updated_minutes_ago = (
-            max(0, int((time.time() - fetched_at) / 60))
-            if fetched_at
-            else 0
-        )
-        return JsonResponse(
-            {'city': city, 'updated_minutes_ago': updated_minutes_ago, **weather}
-        )
+        return JsonResponse({'city': city, **weather})
 
 
 class ContactExportView(LoginRequiredMixin, View):

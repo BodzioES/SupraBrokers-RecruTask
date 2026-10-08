@@ -44,12 +44,15 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.postgres',
     'rest_framework',
+    'drf_spectacular',
     'contacts',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -129,28 +132,48 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 REST_FRAMEWORK = {
+    # JSON only: the task requires plain API endpoints, no browser forms.
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+    ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'suprabrokers-cache',
-        'TIMEOUT': 2700,  # 45 minutes for weather data
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'SupraBrokers Contacts API',
+    'VERSION': '1.0.0',
+}
+
+if os.getenv('REDIS_URL'):
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': os.getenv('REDIS_URL'),
+            'OPTIONS': {'CLIENT_CLASS': 'django_redis.client.DefaultClient'},
+            'TIMEOUT': 2700,  # 45 minutes for weather data
+        }
     }
-}
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'suprabrokers-cache',
+            'TIMEOUT': 2700,  # 45 minutes for weather data
+        }
+    }
 
-# Weather integration (#9). Nominatim requires a descriptive User-Agent.
+# Weather integration. Nominatim requires a descriptive User-Agent.
 WEATHER_USER_AGENT = os.getenv(
     'WEATHER_USER_AGENT', 'SupraBrokersRecruTask/1.0 (recruitment task)'
 )
 WEATHER_HTTP_TIMEOUT = int(os.getenv('WEATHER_HTTP_TIMEOUT', '8'))
-WEATHER_GEO_CACHE_TIMEOUT = 24 * 3600  # coordinates rarely change
+WEATHER_GEO_CACHE_TIMEOUT = 30 * 24 * 3600  # coordinates rarely change
 WEATHER_CACHE_TIMEOUT = 45 * 60  # current weather freshness
-WEATHER_NEGATIVE_CACHE_TIMEOUT = 10 * 60  # failed lookups
 
 # Auth isolation (#11). No registration: users are created via createsuperuser.
 LOGIN_URL = 'login'

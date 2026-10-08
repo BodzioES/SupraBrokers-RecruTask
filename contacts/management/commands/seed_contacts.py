@@ -53,6 +53,7 @@ class Command(BaseCommand):
         parser.add_argument('--count', type=int, default=20)
 
     def handle(self, *args, **options):
+        """Create up to count new unique people (top-up, never duplicates)."""
         count = options['count']
         statuses = list(ContactStatus.objects.all())
         if not statuses:
@@ -63,14 +64,26 @@ class Command(BaseCommand):
         except User.DoesNotExist:
             owner = None
 
+        # People already in the DB count too, so re-runs only top up.
+        # One person appears only once, no matter the city.
+        existing_people = set(
+            Contact.objects.values_list('first_name', 'last_name')
+        )
+        target_total = len(existing_people) + count
         created = 0
         attempts = 0
-        while created < count and attempts < count * 20:
+        # Attempts cap the loop: random duplicates must not loop forever.
+        while (
+            len(existing_people) < target_total and attempts < count * 20
+        ):
             attempts += 1
             phone = ''.join(random.choices('0123456789', k=9))
             if random.random() < 0.3:
                 phone = '+48' + phone
             first_name, last_name = random.choice(NAME_PAIRS)
+            if (first_name, last_name) in existing_people:
+                continue
+            city = random.choice(CITIES)
             email = (
                 f'{ascii_email_part(first_name)}.{ascii_email_part(last_name)}'
                 f'{random.randint(1, 9999)}@example.com'
@@ -84,10 +97,12 @@ class Command(BaseCommand):
                 last_name=last_name,
                 phone=phone,
                 email=email,
-                city=random.choice(CITIES),
+                city=city,
                 status=random.choice(statuses),
                 owner=owner,
+                # Without a demo user the contacts stay visible to everyone.
                 is_shared=owner is None,
             )
+            existing_people.add((first_name, last_name))
             created += 1
         self.stdout.write(self.style.SUCCESS(f'Created {created} contacts.'))

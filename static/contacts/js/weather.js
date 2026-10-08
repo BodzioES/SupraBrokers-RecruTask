@@ -1,9 +1,9 @@
 // Lazy weather loading: one request per distinct city.
-// Backend caches coordinates (24h), weather (45 min) and misses (10 min).
+// Backend caches coordinates (30 days) and weather (45 min).
 (function () {
   const loaded = new Map();
 
-  // WMO weather code -> [lucide icon, label].
+  // WMO weather code -> [lucide icon, short description].
   function condition(code) {
     if (code === 0 || code === 1) return ['sun', 'Clear sky'];
     if (code === 2) return ['cloud-sun', 'Partly cloudy'];
@@ -30,42 +30,18 @@
     return parts.join(' · ') || 'n/a';
   }
 
-  function updatedText(minutes) {
-    if (minutes == null) return '';
-    if (minutes < 1) return 'Updated just now';
-    if (minutes === 1) return 'Updated 1 min ago';
-    return `Updated ${minutes} min ago`;
-  }
-
-  function paintIcons(root) {
-    if (window.lucide) window.lucide.createIcons();
-  }
-
   function fillSlot(slot, data) {
     const [icon, label] = condition(data.weather_code);
-    if (slot.hasAttribute('data-large')) {
-      slot.innerHTML =
-        `<span class="weather-detail">` +
-        `<i data-lucide="${icon}"></i>` +
-        `<span><strong>${data.temperature != null ? `${data.temperature}°C` : 'n/a'}</strong>` +
-        `<br><span class="text-muted small">${data.humidity != null ? `${data.humidity}%` : '–'} · ` +
-        `${data.wind_speed != null ? `${data.wind_speed} km/h` : '–'}</span>` +
-        `<br><span class="text-muted small">${updatedText(data.updated_minutes_ago)}</span></span>` +
-        `</span>`;
-      slot.classList.remove('text-muted');
-    } else {
-      slot.innerHTML =
-        `<span title="${label}"><i data-lucide="${icon}"></i></span> ` +
-        `<span title="${label} · Humidity ${data.humidity != null ? `${data.humidity}%` : '–'} · ` +
-        `Wind ${data.wind_speed != null ? `${data.wind_speed} km/h` : '–'}">${metricsText(data)}</span>`;
-      slot.classList.remove('text-muted');
-    }
-    paintIcons(slot);
+    slot.innerHTML =
+      `<span title="${label}"><i data-lucide="${icon}"></i></span> ` +
+      `<span>${metricsText(data)}</span>`;
+    slot.classList.remove('text-muted');
+    if (window.lucide) window.lucide.createIcons();
   }
 
   function failSlot(slot) {
     slot.innerHTML =
-      `<span class="text-muted" title="Weather unavailable">Weather unavailable</span>`;
+      '<span class="text-muted" title="Weather unavailable">no data</span>';
   }
 
   // Scan root for new weather slots. Already-loaded cities fill instantly.
@@ -74,6 +50,7 @@
     if (!slots.length) return;
     const fresh = new Map();
     slots.forEach((slot) => {
+      // Skip slots handled before, so re-scans never duplicate requests.
       if (slot.dataset.loaded) return;
       const city = (slot.dataset.city || '').trim();
       if (!city) return;
