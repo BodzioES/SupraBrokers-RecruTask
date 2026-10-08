@@ -37,6 +37,11 @@ class ContactModelTest(TestCase):
         with self.assertRaises(Exception):
             make_contact(phone='123 456 789', email='b@example.com')
 
+    def test_duplicate_email_is_rejected(self):
+        make_contact(phone='111111111', email='Jan@Example.com')
+        with self.assertRaises(Exception):
+            make_contact(phone='222222222', email='jan@example.com')
+
 
 class ContactApiTest(APITestCase):
     """CRUD through /api/contacts/."""
