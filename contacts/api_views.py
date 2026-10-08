@@ -18,6 +18,7 @@ class OptionalPagination(PageNumberPagination):
     max_page_size = 100
 
     def paginate_queryset(self, queryset, request, view=None):
+        # None means "no pagination": DRF then returns a plain list.
         if 'page' not in request.query_params and (
             'page_size' not in request.query_params
         ):

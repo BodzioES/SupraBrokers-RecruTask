@@ -53,6 +53,7 @@ class Command(BaseCommand):
         parser.add_argument('--count', type=int, default=20)
 
     def handle(self, *args, **options):
+        """Create up to count new unique people (top-up, never duplicates)."""
         count = options['count']
         statuses = list(ContactStatus.objects.all())
         if not statuses:
