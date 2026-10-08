@@ -94,9 +94,35 @@ body {
 }
 
 @media (max-width: 991px) {
-  /* The logged-in cluster lives in the navbar header on mobile. */
-  ul.user-cluster:has(.user-chip) {
-    display: none;
+  /* Menu links pinned to the far left. */
+  #mainNav .navbar-nav.mx-auto {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    align-items: stretch;
+  }
+
+  #mainNav .navbar-nav.mx-auto .nav-link {
+    text-align: left;
+    padding-left: 0.25rem;
+  }
+
+  /* User cluster first, pinned to the top right of the open menu. */
+  #mainNav.show,
+  #mainNav.collapsing {
+    display: flex;
+    flex-direction: column;
+  }
+
+  ul.user-cluster {
+    order: -1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    width: 100%;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--bs-border-color);
   }
 }
 

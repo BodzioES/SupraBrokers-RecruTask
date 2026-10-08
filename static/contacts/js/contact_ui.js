@@ -90,14 +90,28 @@
     if (window.refreshWeather) window.refreshWeather(detail);
   }
 
-  const offcanvasEl = document.getElementById('detail-offcanvas');
+  const listColumn = document.getElementById('list-column');
+  const detailColumn = document.getElementById('detail-column');
+  const detailBack = document.getElementById('detail-back');
   const isMobile = () => window.matchMedia('(max-width: 991px)').matches;
 
-  // On mobile the detail panel opens as a Bootstrap offcanvas drawer
-  // (backdrop, Escape and close button handled by the framework).
+  // On mobile the list hides and the detail column takes the full width.
   function revealDetail() {
-    if (!isMobile() || !offcanvasEl || !window.bootstrap) return;
-    bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl).show();
+    if (!isMobile() || !listColumn || !detailColumn) return;
+    listColumn.classList.add('d-none');
+    detailColumn.classList.remove('d-none');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function showList() {
+    if (!listColumn || !detailColumn) return;
+    detailColumn.classList.add('d-none');
+    listColumn.classList.remove('d-none');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  if (detailBack) {
+    detailBack.addEventListener('click', showList);
   }
 
   async function showDetail(id, row) {
