@@ -8,12 +8,14 @@ All code, identifiers and comments are in English.
 - Contact list with accent-insensitive search, sorting (surname / added date)
   and pagination, plus a click-to-open detail panel (no page reload)
 - Add / edit / delete contacts via modal forms with client + server validation
-- Weather per city (Open-Meteo + Nominatim) with condition icons, lazy loading
-  and caching; failed lookups never break the page
+- Weather per city (Open-Meteo + Nominatim) with lazy loading and caching;
+  failed lookups never break the page
 - CSV import with a skipped-row report and a sample file, CSV export (UTF-8 BOM)
 - Dashboard with two charts: contacts per city and contacts per status
 - Login without registration; users see and manage only own or shared contacts
-- Light / dark theme toggle, responsive layout, human-readable status labels
+- Light / dark theme toggle, responsive layout (on mobile the detail panel
+  takes the full width with a Back button, user menu sits in the navbar
+  burger), human-readable status labels
 - REST API with browsable docs at `/api/docs/`
 
 ## Screenshots
@@ -62,7 +64,6 @@ Note: if port 5432 is taken by a local Postgres, stop it or remap the
 | `REDIS_URL` | (empty) | e.g. `redis://redis:6379/0`; without it local-memory cache is used |
 | `WEATHER_USER_AGENT` | `SupraBrokersRecruTask/1.0 (recruitment task)` | Required by Nominatim |
 | `WEATHER_HTTP_TIMEOUT` | `8` | Seconds for weather HTTP calls |
-| `GITHUB_REPO_URL` | (empty) | Footer link; placeholder text when empty |
 
 ## How to run tests
 Tests need a Postgres database (search uses the `unaccent` extension, which
@@ -71,15 +72,16 @@ migrations create; the DB user must be allowed to create extensions):
 DB_HOST=localhost DB_PORT=5433 DB_NAME=suprabrokers DB_USER=postgres \
 DB_PASSWORD=postgres python manage.py test
 ```
-17 tests: model validation, API CRUD and isolation, CSV import, search,
-weather service (mocked HTTP + cache), seed idempotency.
+3 tests (as suggested in the task): model validation (unique phone),
+API CRUD (create/update/delete) and CSV import with a skipped-row report.
 
 ## Demo credentials
 No demo account is shipped. Create one with `createsuperuser` (local) or:
 ```bash
 docker compose exec web python manage.py createsuperuser
 ```
-Then optionally `seed_contacts --count 20` for demo data.
+Then optionally `seed_contacts --count 20` for demo data. Seeded contacts
+belong to the `test` user when it exists, otherwise they are shared.
 
 ## API examples
 The API uses session authentication — log in via the browser first, or reuse
