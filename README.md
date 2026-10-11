@@ -12,17 +12,13 @@ All code, identifiers and comments are in English.
   failed lookups never break the page
 - CSV import with a skipped-row report and a sample file, CSV export (UTF-8 BOM)
 - Dashboard with two charts: contacts per city and contacts per status
+  (the task suggests one chart; the second one reuses the same status colors
+  and makes the page look complete)
 - Login without registration; users see and manage only own or shared contacts
 - Light / dark theme toggle, responsive layout (on mobile the detail panel
   takes the full width with a Back button, user menu sits in the navbar
   burger), human-readable status labels
 - REST API with browsable docs at `/api/docs/`
-
-## Screenshots
-> Placeholders — replace with real screenshots before sending.
-- `docs/screenshot-list.png` — contact list with detail panel
-- `docs/screenshot-form.png` — add/edit modal with validation
-- `docs/screenshot-dashboard.png` — charts
 
 ## Local installation step by step
 ```bash
